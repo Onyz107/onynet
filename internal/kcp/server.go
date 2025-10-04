@@ -14,7 +14,6 @@ import (
 type Server struct {
 	listener *kcp.Listener
 	ctx      context.Context
-	clients  *sync.Map
 	done     chan struct{}
 	once     sync.Once
 }
