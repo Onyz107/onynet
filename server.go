@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	intErrors "github.com/Onyz107/onynet/errors"
@@ -25,6 +26,8 @@ type Server struct {
 	privateKey *rsa.PrivateKey
 	ctx        context.Context
 }
+
+var clientCounter int64
 
 // NewServer starts an OnyNet server listening on given address.
 func NewServer(addr net.Addr, privateKey *rsa.PrivateKey, ctx context.Context) (*Server, error) {
@@ -68,15 +71,7 @@ func (s *Server) Accept() (*ClientConn, error) {
 
 	onynetClientConn := &ClientConn{client: client, manager: manager, ctx: s.ctx}
 
-	id := len(s.clients)
-	for clientId, _ := range s.clients {
-		if clientId == id {
-			id++
-			continue
-		}
-		break
-	}
-
+	id := int(atomic.AddInt64(&clientCounter, 1))
 	s.mu.Lock()
 	s.clients[id] = onynetClientConn
 	s.mu.Unlock()
@@ -87,6 +82,7 @@ func (s *Server) Accept() (*ClientConn, error) {
 		onynetClientConn.Close()
 		return nil, errors.Join(intErrors.ErrHeartbeatStream, err)
 	}
+
 	go func() {
 		defer heartbeatStream.Close()
 		if err := heartbeat.ReceiveHeartbeat(heartbeatStream, s.ctx); err != nil {

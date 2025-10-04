@@ -18,8 +18,8 @@ import (
 
 // Client defines a client that is ready to connect to a server.
 // The difference between Client and ClientConn is that Client should
-// only be used when preforming operations on the Client, while ClientConn
-// should only be used when preforming operations on the Server.
+// only be used when performing operations on the Client, while ClientConn
+// should only be used when performing operations on the Server.
 type Client struct {
 	client  *kcp.Client
 	manager *intSmux.Manager
