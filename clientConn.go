@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net"
-	"sync"
 	"time"
 
 	"github.com/Onyz107/onynet/internal/kcp"
@@ -15,8 +14,6 @@ type ClientConn struct {
 	client  *kcp.ClientConn
 	manager *intSmux.Manager
 	ctx     context.Context
-	done    chan struct{}
-	once    sync.Once
 }
 
 // OpenStream opens a named stream to communicate with the server.
@@ -41,8 +38,6 @@ func (cn *ClientConn) RemoteAddr() net.Addr {
 
 // Close closes the client connection and streams.
 func (cn *ClientConn) Close() error {
-	cn.once.Do(func() { close(cn.done) })
-
 	var errs []error
 
 	if err := cn.client.Close(); err != nil {

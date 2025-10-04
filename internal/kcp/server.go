@@ -30,8 +30,7 @@ func NewServer(addr net.Addr, ctx context.Context) (*Server, error) {
 	go func() {
 		select {
 		case <-server.ctx.Done():
-			logger.Log.Debug("closing server because of context cancellation")
-			server.listener.Close()
+			server.Close()
 			return
 		case <-server.done:
 			return

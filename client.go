@@ -5,7 +5,6 @@ import (
 	"crypto/rsa"
 	"errors"
 	"net"
-	"sync"
 	"time"
 
 	intErrors "github.com/Onyz107/onynet/errors"
@@ -21,8 +20,6 @@ type Client struct {
 	client  *kcp.Client
 	manager *intSmux.Manager
 	ctx     context.Context
-	done    chan struct{}
-	once    sync.Once
 }
 
 // Dial connects to an OnyNet server, performs optional authentication, and returns a client.
@@ -55,17 +52,7 @@ func Dial(addr net.Addr, publicKey *rsa.PublicKey, ctx context.Context) (*Client
 
 	manager := intSmux.NewManager(session, aesKey, ctx)
 
-	onynetClient := &Client{client: client, manager: manager, ctx: ctx, done: make(chan struct{}, 1)}
-
-	go func() {
-		select {
-		case <-onynetClient.ctx.Done():
-			onynetClient.Close()
-			return
-		case <-onynetClient.done:
-			return
-		}
-	}()
+	onynetClient := &Client{client: client, manager: manager, ctx: ctx}
 
 	heartbeatStream, err := onynetClient.OpenStream("heartbeatStream", 5*time.Second)
 	if err != nil {
@@ -95,8 +82,6 @@ func (c *Client) AcceptStream(name string, timeout time.Duration) (*intSmux.Stre
 
 // Close gracefully closes client connections and streams.
 func (c *Client) Close() error {
-	c.once.Do(func() { close(c.done) })
-
 	var errs []error
 
 	if err := c.client.Close(); err != nil {

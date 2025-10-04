@@ -5,7 +5,6 @@ import (
 	"crypto/rsa"
 	"errors"
 	"net"
-	"sync"
 	"time"
 
 	intErrors "github.com/Onyz107/onynet/errors"
@@ -21,8 +20,6 @@ type Server struct {
 	server     *kcp.Server
 	privateKey *rsa.PrivateKey
 	ctx        context.Context
-	done       chan struct{}
-	once       sync.Once
 }
 
 // NewServer starts an OnyNet server listening on given address.
@@ -32,17 +29,7 @@ func NewServer(addr net.Addr, privateKey *rsa.PrivateKey, ctx context.Context) (
 		return nil, errors.Join(intErrors.ErrNewServer, err)
 	}
 
-	onynetServer := &Server{server: server, privateKey: privateKey, ctx: ctx, done: make(chan struct{}, 1)}
-
-	go func() {
-		select {
-		case <-onynetServer.ctx.Done():
-			onynetServer.Close()
-			return
-		case <-onynetServer.done:
-			return
-		}
-	}()
+	onynetServer := &Server{server: server, privateKey: privateKey, ctx: ctx}
 
 	return onynetServer, nil
 }
@@ -75,16 +62,7 @@ func (s *Server) Accept() (*ClientConn, error) {
 	}
 	manager := intSmux.NewManager(session, aesKey, s.ctx)
 
-	onynetClientConn := &ClientConn{client: client, manager: manager, ctx: s.ctx, done: make(chan struct{}, 1)}
-	go func() {
-		select {
-		case <-onynetClientConn.ctx.Done():
-			onynetClientConn.Close()
-			return
-		case <-onynetClientConn.done:
-			return
-		}
-	}()
+	onynetClientConn := &ClientConn{client: client, manager: manager, ctx: s.ctx}
 
 	heartbeatStream, err := onynetClientConn.AcceptStream("heartbeatStream", 5*time.Second)
 	if err != nil {
@@ -104,6 +82,5 @@ func (s *Server) Accept() (*ClientConn, error) {
 
 // Close shuts down the server and all active connections.
 func (s *Server) Close() error {
-	s.once.Do(func() { close(s.done) })
 	return s.server.Close()
 }
