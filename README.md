@@ -1,29 +1,27 @@
 # OnyNet
 
-A high-performance networking library for Go with support for encrypted streams, KCP transport, smux multiplexing, and heartbeat monitoring.
+A high-performance, secure networking library for Go built on top of KCP and SMUX, featuring mutual TLS-style authentication, AES-GCM encryption, and multiplexed streams.
 
 ## Features
-- **KCP transport**: Reliable and fast UDP-based protocol.
-- **AES-GCM and/or AES-CTR encryption**: Secure data transfer.
-- **Smux multiplexing**: Multiple streams over a single connection.
-- **Authentication**: RSA-based client/server authentication.
-- **Heartbeat**: Connection liveness monitoring.
-- **Concurrent-safe**: Designed for multiple streams and clients.
 
-OnyNet is perfect for Go projects that need low-latency, secure, reliable, multiplexed connections over unreliable networks.
-Think game servers, real-time collaboration tools, or IoT device communication. It shines when you want multiple
-independent streams over a single UDP connection with AES encryption and RSA authentication built-in. It’s less suited
-for ultra-high-frequency microservices or web APIs where standard HTTP/gRPC is simpler, but for custom protocols
-needing speed, reliability, and security, OnyNet is solid.
+- **High Performance**: Built on KCP (ARQ protocol) for reliable UDP communication with optimized window sizes and no-delay settings
+- **Secure by Default**: Optional RSA + AES-GCM encryption with mutual authentication
+- **Stream Multiplexing**: Multiple logical streams over a single connection using SMUX
+- **Named Streams**: Easy-to-use named stream API for organizing communication channels
+- **Automatic Heartbeat**: Built-in connection health monitoring with automatic cleanup
+- **Context-Aware**: Full context.Context support for graceful shutdown and cancellation
+- **Flexible Data Transfer**: Multiple transfer modes including raw, serialized, encrypted, and streaming
 
 ## Installation
+
 ```bash
 go get github.com/Onyz107/onynet
-````
+```
 
-## Usage
+## Quick Start
 
-### Server
+### Server Example
+
 ```go
 package main
 
@@ -122,7 +120,8 @@ func main() {
 }
 ```
 
-### Client
+### Client Example
+
 ```go
 package main
 
@@ -201,15 +200,189 @@ func main() {
 }
 ```
 
-### Stream Operations
+## Authentication
 
-* `Send(data, timeout)` – Send raw bytes.
-* `NewStreamedSender(timeout)` - Get an `io.WriterCloser` that supports timeouts.
-* `SendSerialized(data, timeout)` – Send length-prefixed data.
-* `SendEncrypted(data, timeout)` – Send AES-GCM encrypted data.
-* `NewStreamedEncryptedSender` - Same as `NewStreamedSender` but with AES-CTR encryption.
-* `Receive(buffer, timeout)` – Receive raw bytes.
-* `NewStreamedReceiver(timeout)` - Get an `io.ReadCloser` that supports timeouts.
-* `ReceiveSerialized(buffer, timeout)` – Receive length-prefixed data.
-* `ReceiveEncrypted(buffer, timeout)` – Receive and decrypt AES-GCM data.
-* `NewStreamedEncryptedReceiver(timeout)` - Same as `NewStreamedReceiver` but with AES-CTR encryption.
+OnyNet supports optional mutual authentication using RSA keys:
+
+```go
+// Generate RSA keys (do this once, store securely)
+privateKey, _ := rsa.GenerateKey(rand.Reader, 2048)
+publicKey := &privateKey.PublicKey
+
+// Server side
+server, _ := onynet.NewServer(addr, privateKey, ctx)
+
+// Client side
+client, _ := onynet.Dial(addr, publicKey, ctx)
+```
+
+When authentication is enabled:
+1. Client encrypts an AES-256 key with the server's public key
+2. Server decrypts the AES key using its private key
+3. Server proves its identity by signing a challenge
+4. All subsequent stream data can be encrypted with the shared AES key
+
+## Stream Operations
+
+### Named Streams
+
+Streams are identified by names, making it easy to organize different types of communication:
+
+```go
+// Server accepts streams
+dataStream, _ := client.AcceptStream("data", 5*time.Second)
+controlStream, _ := client.AcceptStream("control", 5*time.Second)
+
+// Client opens streams
+dataStream, _ := client.OpenStream("data", 5*time.Second)
+controlStream, _ := client.OpenStream("control", 5*time.Second)
+```
+
+### Transfer Methods
+
+OnyNet provides multiple ways to transfer data:
+
+#### 1. Raw Transfer
+```go
+// Send
+data := []byte("raw data")
+stream.Send(data, 10*time.Second)
+
+// Receive
+buf := make([]byte, 1024)
+stream.Receive(buf, 10*time.Second)
+```
+
+#### 2. Serialized Transfer (with length prefix)
+```go
+// Send
+stream.SendSerialized(data, 10*time.Second)
+
+// Receive
+n, _ := stream.ReceiveSerialized(buf, 10*time.Second)
+actualData := buf[:n]
+```
+
+#### 3. Encrypted Transfer (AES-GCM)
+```go
+// Send (only works if authentication is enabled)
+stream.SendEncrypted(data, 10*time.Second)
+
+// Receive
+n, _ := stream.ReceiveEncrypted(buf, 10*time.Second)
+```
+
+#### 4. Streaming Transfer
+```go
+// Send large data via streaming
+writer := stream.NewStreamedSender(30*time.Second)
+io.Copy(writer, largeFile)
+writer.Close()
+
+// Receive streamed data
+reader := stream.NewStreamedReceiver(30*time.Second)
+io.Copy(destination, reader)
+reader.Close()
+```
+
+#### 5. Encrypted Streaming
+```go
+// Send encrypted stream
+writer, _ := stream.NewStreamedEncryptedSender(30*time.Second)
+io.Copy(writer, sensitiveFile)
+writer.Close()
+
+// Receive encrypted stream
+reader, _ := stream.NewStreamedEncryptedReceiver(30*time.Second)
+io.Copy(destination, reader)
+reader.Close()
+```
+
+## Server Management
+
+Get information about connected clients:
+
+```go
+// Get all clients
+clients := server.GetClients()
+for id, client := range clients {
+    log.Printf("Client %d: %s", id, client.RemoteAddr())
+}
+
+// Get specific client
+client := server.GetClient(5)
+if client != nil {
+    // Use client
+}
+```
+
+## Architecture
+
+OnyNet is built on three main layers:
+
+1. **KCP Layer**: Provides reliable UDP transport with ARQ
+2. **SMUX Layer**: Multiplexes multiple streams over a single KCP connection
+3. **OnyNet Layer**: Adds named streams, authentication, encryption, and convenience methods
+
+```
+┌─────────────────────────────────────┐
+│          Your Application           │
+├─────────────────────────────────────┤
+│  OnyNet (Named Streams, Auth, Enc)  │
+├─────────────────────────────────────┤
+│      SMUX (Stream Multiplexing)     │
+├─────────────────────────────────────┤
+│        KCP (Reliable UDP)           │
+├─────────────────────────────────────┤
+│              UDP                    │
+└─────────────────────────────────────┘
+```
+
+## Error Handling
+
+OnyNet provides structured errors in the `errors` package:
+
+```go
+import intErrors "github.com/Onyz107/onynet/errors"
+
+_, err := client.OpenStream("test", 5*time.Second)
+if errors.Is(err, intErrors.ErrTimeout) {
+    // Handle timeout
+} else if errors.Is(err, intErrors.ErrCtxCancelled) {
+    // Handle cancellation
+}
+```
+
+## Performance Tuning
+
+KCP connections are pre-configured with optimized settings:
+- Window size: 512/512
+- No-delay mode: 1, 40ms interval, 2 resend, 1 no-congestion-control
+
+These settings prioritize low latency and high throughput. Modify `internal/kcp/client.go` and `internal/kcp/server.go` if different settings are needed.
+
+## Graceful Shutdown
+
+Use context cancellation for graceful shutdown:
+
+```go
+ctx, cancel := context.WithCancel(context.Background())
+
+server, _ := onynet.NewServer(addr, privateKey, ctx)
+
+// Later, trigger shutdown
+cancel()
+// All connections and streams will be closed automatically
+```
+
+## Dependencies
+
+- [kcp-go](https://github.com/xtaci/kcp-go) - KCP protocol implementation
+- [smux](https://github.com/xtaci/smux) - Stream multiplexing
+- [onylogger](https://github.com/Onyz107/onylogger) - Internal logging
+
+## Thread Safety
+
+- `Server.GetClients()` and `Server.GetClient()` are thread-safe
+- Multiple goroutines can safely call `Accept()` and `OpenStream()`
+- Individual streams should not be used concurrently from multiple goroutines
