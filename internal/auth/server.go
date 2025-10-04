@@ -9,6 +9,7 @@ import (
 	"errors"
 	"io"
 	"net"
+	"time"
 
 	intErrors "github.com/Onyz107/onynet/errors"
 	"github.com/Onyz107/onynet/internal/logger"
@@ -16,6 +17,9 @@ import (
 
 // AuthorizeSelfServer signs a challenge sent by a client to prove server identity.
 func AuthorizeSelfServer(conn net.Conn, privateKey *rsa.PrivateKey) error {
+	conn.SetDeadline(time.Now().Add(5 * time.Second))
+	defer conn.SetDeadline(time.Time{})
+
 	challenge := serverChallengePool.Get().([]byte)
 	defer serverChallengePool.Put(challenge)
 
@@ -57,21 +61,27 @@ func AuthorizeSelfServer(conn net.Conn, privateKey *rsa.PrivateKey) error {
 
 // AuthorizeClient reads an AES key encrypted by a client and decrypts it.
 func AuthorizeClient(conn net.Conn, privateKey *rsa.PrivateKey) (aesKey []byte, err error) {
+	conn.SetDeadline(time.Now().Add(5 * time.Second))
+	defer conn.SetDeadline(time.Time{})
+
 	header := headerPool.Get().([]byte)
 	defer headerPool.Put(header)
 
+	logger.Log.Debug("AuthorizeClient: receiving header")
 	if _, err := io.ReadFull(conn, header); err != nil {
 		return nil, errors.Join(intErrors.ErrRead, err)
 	}
 	length := binary.BigEndian.Uint64(header)
-	logger.Log.Debugf("AuthorizeClient: received length: %d", length)
+	logger.Log.Debugf("AuthorizeClient: received header with length: %d", length)
 
+	logger.Log.Debug("AuthorizeClient: receiving challenge")
 	challenge := make([]byte, length)
 	if _, err := io.ReadFull(conn, challenge); err != nil {
 		return nil, errors.Join(intErrors.ErrRead, err)
 	}
 	logger.Log.Debugf("AuthorizeClient: received challenge: length: %d", len(challenge))
 
+	logger.Log.Debug("AuthorizeClient: computing aesKey")
 	aesKey, err = rsa.DecryptOAEP(sha256.New(), rand.Reader, privateKey, challenge, nil)
 	if err != nil {
 		return nil, errors.Join(intErrors.ErrPrivateKey, err)

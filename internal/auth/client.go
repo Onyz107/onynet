@@ -9,6 +9,7 @@ import (
 	"errors"
 	"io"
 	"net"
+	"time"
 
 	intErrors "github.com/Onyz107/onynet/errors"
 	intCrypto "github.com/Onyz107/onynet/internal/crypto"
@@ -17,6 +18,9 @@ import (
 
 // AuthorizeSelfClient performs client-side authentication and returns an AES key.
 func AuthorizeSelfClient(conn net.Conn, publicKey *rsa.PublicKey) (aesKey []byte, err error) {
+	conn.SetDeadline(time.Now().Add(5 * time.Second))
+	defer conn.SetDeadline(time.Time{})
+
 	aesKey = intCrypto.GenerateAESKey(256)
 	logger.Log.Debugf("AuthorizeSelfClient: aesKey: length: %d", len(aesKey))
 	ciphertext, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, publicKey, aesKey, nil)
@@ -52,6 +56,9 @@ func AuthorizeSelfClient(conn net.Conn, publicKey *rsa.PublicKey) (aesKey []byte
 
 // AuthorizeServer performs server-side challenge verification for the client.
 func AuthorizeServer(conn net.Conn, publicKey *rsa.PublicKey) error {
+	conn.SetDeadline(time.Now().Add(5 * time.Second))
+	defer conn.SetDeadline(time.Time{})
+
 	challenge := make([]byte, serverChallengeLength)
 	rand.Read(challenge) // never returns an error
 	hash := sha256.Sum256(challenge)
