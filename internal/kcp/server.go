@@ -14,6 +14,7 @@ import (
 type Server struct {
 	listener *kcp.Listener
 	ctx      context.Context
+	clients  *sync.Map
 	done     chan struct{}
 	once     sync.Once
 }
@@ -62,7 +63,7 @@ func (s *Server) Accept() (*ClientConn, error) {
 		select {
 		case <-client.ctx.Done():
 			logger.Log.Debug("kcp.Server Accept: closing client connection because of context canceled")
-			conn.Close()
+			client.Close()
 			return
 		case <-client.done:
 			return
