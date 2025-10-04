@@ -10,6 +10,10 @@ import (
 	intSmux "github.com/Onyz107/onynet/internal/smux"
 )
 
+// ClientConn defines a client that is connected to a server.
+// The difference between Client and ClientConn is that Client should
+// only be used when preforming operations on the Client, while ClientConn
+// should only be used when preforming operations on the Server.
 type ClientConn struct {
 	client  *kcp.ClientConn
 	manager *intSmux.Manager

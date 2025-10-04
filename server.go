@@ -16,6 +16,7 @@ import (
 	"github.com/xtaci/smux"
 )
 
+// Server defines a server which will be listening for incoming connections.
 type Server struct {
 	server     *kcp.Server
 	privateKey *rsa.PrivateKey

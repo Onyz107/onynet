@@ -16,14 +16,17 @@ import (
 	"github.com/xtaci/smux"
 )
 
+// Client defines a client that is ready to connect to a server.
+// The difference between Client and ClientConn is that Client should
+// only be used when preforming operations on the Client, while ClientConn
+// should only be used when preforming operations on the Server.
 type Client struct {
 	client  *kcp.Client
 	manager *intSmux.Manager
 	ctx     context.Context
 }
 
-// Dial connects to an OnyNet server, performs optional authentication, and returns a client.
-// The publicKey argument can be nil but this will fail anything that calls *.Send/ReceiveEncrypted
+// Dial connects to an OnyNet server, performs optional authentication (with publicKey being nil), and returns a client.
 func Dial(addr net.Addr, publicKey *rsa.PublicKey, ctx context.Context) (*Client, error) {
 	client, err := kcp.Dial(addr, ctx)
 	if err != nil {
