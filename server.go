@@ -36,7 +36,7 @@ func NewServer(addr net.Addr, privateKey *rsa.PrivateKey, ctx context.Context) (
 		return nil, errors.Join(intErrors.ErrNewServer, err)
 	}
 
-	onynetServer := &Server{server: server, privateKey: privateKey, ctx: ctx}
+	onynetServer := &Server{server: server, clients: make(map[int]*ClientConn), privateKey: privateKey, ctx: ctx}
 
 	return onynetServer, nil
 }
