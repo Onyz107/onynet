@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"errors"
 	"net"
+	"sync"
 	"time"
 
 	intErrors "github.com/Onyz107/onynet/errors"
@@ -19,6 +20,8 @@ import (
 // Server defines a server which will be listening for incoming connections.
 type Server struct {
 	server     *kcp.Server
+	clients    map[int]*ClientConn
+	mu         sync.RWMutex
 	privateKey *rsa.PrivateKey
 	ctx        context.Context
 }
@@ -65,8 +68,22 @@ func (s *Server) Accept() (*ClientConn, error) {
 
 	onynetClientConn := &ClientConn{client: client, manager: manager, ctx: s.ctx}
 
+	id := len(s.clients)
+	for clientId, _ := range s.clients {
+		if clientId == id {
+			id++
+			continue
+		}
+		break
+	}
+
+	s.mu.Lock()
+	s.clients[id] = onynetClientConn
+	s.mu.Unlock()
+
 	heartbeatStream, err := onynetClientConn.AcceptStream("heartbeatStream", 5*time.Second)
 	if err != nil {
+		delete(s.clients, id)
 		onynetClientConn.Close()
 		return nil, errors.Join(intErrors.ErrHeartbeatStream, err)
 	}
@@ -74,11 +91,35 @@ func (s *Server) Accept() (*ClientConn, error) {
 		defer heartbeatStream.Close()
 		if err := heartbeat.ReceiveHeartbeat(heartbeatStream, s.ctx); err != nil {
 			logger.Log.Debugf("closing client because of heartbeat err: %v", err)
+			delete(s.clients, id)
 			onynetClientConn.Close()
 		}
 	}()
 
 	return onynetClientConn, nil
+}
+
+// GetClients returns a map of all connected clients with id being the key and ClientConn being the value.
+func (s *Server) GetClients() map[int]*ClientConn {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	copyMap := make(map[int]*ClientConn, len(s.clients))
+	for k, v := range s.clients {
+		copyMap[k] = v
+	}
+	return copyMap
+}
+
+// GetClient returns a ClientConn of a connected client with the id provided.
+func (s *Server) GetClient(id int) *ClientConn {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	client, ok := s.clients[id]
+	if ok {
+		return client
+	}
+	return nil
 }
 
 // Close shuts down the server and all active connections.
