@@ -39,6 +39,7 @@ func (c *Client) Write(b []byte) (n int, err error) {
 
 func (c *Client) Close() error {
 	c.once.Do(func() { close(c.done) })
+	logger.Log.Debugf("kcp.Client Close: closing client connection")
 	return c.conn.Close()
 }
 
@@ -64,10 +65,12 @@ func (c *Client) SetWriteDeadline(t time.Time) error {
 
 // Dial connects to a KCP server and returns a client wrapper.
 func Dial(addr net.Addr, ctx context.Context) (*Client, error) {
+	logger.Log.Debugf("kcp/client Dial: connecting to %s", addr.String())
 	conn, err := kcp.DialWithOptions(addr.String(), nil, 0, 0)
 	if err != nil {
 		return nil, errors.Join(intErrors.ErrBadAddr, err)
 	}
+	logger.Log.Debugf("kcp/client Dial: connected to %s", addr.String())
 
 	// Performance optimizations
 	conn.SetWindowSize(512, 512)
@@ -78,7 +81,7 @@ func Dial(addr net.Addr, ctx context.Context) (*Client, error) {
 	go func() {
 		select {
 		case <-client.ctx.Done():
-			logger.Log.Debug("closing client connection because of context cancellation")
+			logger.Log.Debug("kcp/client Dial: closing client because of context canceled")
 			client.Close()
 			return
 		case <-client.done:

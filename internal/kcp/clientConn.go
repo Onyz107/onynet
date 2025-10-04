@@ -7,6 +7,7 @@ import (
 	"time"
 
 	intErrors "github.com/Onyz107/onynet/errors"
+	"github.com/Onyz107/onynet/internal/logger"
 	"github.com/xtaci/kcp-go/v5"
 )
 
@@ -37,6 +38,7 @@ func (c *ClientConn) Write(p []byte) (n int, err error) {
 
 func (c *ClientConn) Close() error {
 	c.once.Do(func() { close(c.done) })
+	logger.Log.Debugf("kcp.ClientConn Close: closing client connection")
 	return c.conn.Close()
 }
 
