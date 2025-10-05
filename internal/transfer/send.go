@@ -73,6 +73,10 @@ func SendEncrypted(conn net.Conn, data, aesKey []byte, timeout time.Duration) er
 
 // NewStreamedEncryptedSender returns an io.WriteCloser that encrypts data as it is written to the stream.
 func NewStreamedEncryptedSender(conn net.Conn, aesKey []byte, timeout time.Duration) (io.WriteCloser, error) {
+	if aesKey == nil {
+		return nil, intErrors.ErrAESKey
+	}
+
 	nonce := make([]byte, aes.BlockSize)
 	rand.Read(nonce)
 

@@ -39,7 +39,7 @@ func NewManager(session *smux.Session, aesKey []byte, ctx context.Context) *Mana
 // Accept waits for a stream with a given name.
 func (m *Manager) Accept(name string, timeout time.Duration) (*Stream, error) {
 	if len(name) > 0xFFFF {
-		return nil, intErrors.ErrNameMismatch
+		return nil, intErrors.ErrNameTooLong
 	}
 
 	ctx := m.ctx
@@ -127,7 +127,7 @@ func (m *Manager) acceptStream(name string, timeout time.Duration) (*Stream, err
 // Open creates a new stream with a given name.
 func (m *Manager) Open(name string, timeout time.Duration) (*Stream, error) {
 	if len(name) > 0xFFFF {
-		return nil, intErrors.ErrNameMismatch
+		return nil, intErrors.ErrNameTooLong
 	}
 
 	ctx := m.ctx

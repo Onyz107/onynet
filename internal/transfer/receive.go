@@ -81,6 +81,10 @@ func ReceiveEncrypted(conn net.Conn, buf, aesKey []byte, timeout time.Duration) 
 
 // NewStreamedEncryptedReceiver returns an io.ReadCloser that decrypts data as it comes from the stream.
 func NewStreamedEncryptedReceiver(conn net.Conn, aesKey []byte, timeout time.Duration) (io.ReadCloser, error) {
+	if aesKey == nil {
+		return nil, intErrors.ErrAESKey
+	}
+
 	reader := NewStreamedReceiver(conn, timeout)
 
 	nonce := make([]byte, aes.BlockSize)
