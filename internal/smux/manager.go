@@ -49,6 +49,11 @@ func (m *Manager) Accept(name string, timeout time.Duration) (*Stream, error) {
 		defer cancel()
 	}
 
+	streamTimeout := timeout
+	if timeout > 5*time.Second {
+		streamTimeout = 5 * time.Second
+	}
+
 	for {
 		time.Sleep(50 * time.Millisecond)
 		select {
@@ -60,9 +65,9 @@ func (m *Manager) Accept(name string, timeout time.Duration) (*Stream, error) {
 			return nil, intErrors.ErrCtxCancelled
 
 		default:
-			stream, err := m.acceptStream(name, 5*time.Second)
+			stream, err := m.acceptStream(name, streamTimeout)
 			if err != nil {
-				if errors.Is(err, smux.ErrTimeout) {
+				if errors.Is(err, smux.ErrTimeout) || errors.Is(err, intErrors.ErrNameMismatch) {
 					continue
 				}
 				return nil, err
@@ -78,10 +83,7 @@ func (m *Manager) acceptStream(name string, timeout time.Duration) (*Stream, err
 		return nil, errors.Join(intErrors.ErrAcceptStream, err)
 	}
 
-	if err := stream.SetDeadline(time.Now().Add(timeout)); err != nil {
-		stream.Close()
-		return nil, errors.Join(intErrors.ErrSetDeadline, err)
-	}
+	stream.SetDeadline(time.Now().Add(timeout))
 
 	header := headerPool.Get().([]byte)
 	defer headerPool.Put(header)
@@ -137,6 +139,11 @@ func (m *Manager) Open(name string, timeout time.Duration) (*Stream, error) {
 		defer cancel()
 	}
 
+	streamTimeout := timeout
+	if timeout > 5*time.Second {
+		streamTimeout = 5 * time.Second
+	}
+
 	for {
 		time.Sleep(50 * time.Millisecond)
 		select {
@@ -148,9 +155,9 @@ func (m *Manager) Open(name string, timeout time.Duration) (*Stream, error) {
 			return nil, intErrors.ErrCtxCancelled
 
 		default:
-			stream, err := m.openStream(name, 5*time.Second)
+			stream, err := m.openStream(name, streamTimeout)
 			if err != nil {
-				if errors.Is(err, smux.ErrTimeout) {
+				if errors.Is(err, smux.ErrTimeout) || errors.Is(err, intErrors.ErrNameMismatch) {
 					continue
 				}
 				return nil, err
@@ -166,10 +173,7 @@ func (m *Manager) openStream(name string, timeout time.Duration) (*Stream, error
 		return nil, errors.Join(intErrors.ErrOpenStream, err)
 	}
 
-	if err := stream.SetDeadline(time.Now().Add(timeout)); err != nil {
-		stream.Close()
-		return nil, errors.Join(intErrors.ErrSetDeadline, err)
-	}
+	stream.SetDeadline(time.Now().Add(timeout))
 
 	header := headerPool.Get().([]byte)
 	defer headerPool.Put(header)
