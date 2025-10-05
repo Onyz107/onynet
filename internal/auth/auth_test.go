@@ -204,14 +204,12 @@ func TestOnlyServerAuth(t *testing.T) {
 
 	serverAuth := func(tb testing.TB, c *kcp.ClientConn) {
 		priv := parsePrivateKey(t, privateKey)
-		if _, err := auth.AuthorizeClient(c, priv); err != nil {
-			tb.Fatal(err)
+		if _, err := auth.AuthorizeClient(c, priv); err == nil {
+			tb.Fatal("no error returned")
 		}
-		tb.Log("Authorized client")
-		if err := auth.AuthorizeSelfServer(c, priv); err != nil {
-			tb.Fatal(err)
+		if err := auth.AuthorizeSelfServer(c, priv); err == nil {
+			tb.Fatal("no error returned")
 		}
-		tb.Log("Authorized self server")
 	}
 
 	serverAuth(t, clientConn)
