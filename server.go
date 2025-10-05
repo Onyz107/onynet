@@ -30,6 +30,10 @@ type Server struct {
 var clientCounter int64
 
 // NewServer starts an OnyNet server listening on given address.
+//
+// Possible errors:
+//   - ErrNewServer: failed to start a new kcp server using the given address
+//   - ErrBadAddr: the given address was invalid in the used context
 func NewServer(addr net.Addr, privateKey *rsa.PrivateKey, ctx context.Context) (*Server, error) {
 	server, err := kcp.NewServer(addr, ctx)
 	if err != nil {
@@ -42,6 +46,18 @@ func NewServer(addr net.Addr, privateKey *rsa.PrivateKey, ctx context.Context) (
 }
 
 // Accept waits for a new client connection and performs authentication.
+//
+// Possible errors:
+//   - ErrAcceptClient: failed to accept a client
+//   - ErrAccept: listener failed to accept a client
+//   - ErrWrite: failed to send headers to the server
+//   - ErrShortWrite: headers sent were shorter than expected
+//   - ErrRead: failed to receive headers from the client
+//   - ErrPrivateKey: failed to decrypt authentication challenges
+//   - ErrHeartbeatStream: failed to open the heartbeat stream
+//   - ErrCtxCancelled: context was cancelled while waiting for the heartbeat stream to establish connection
+//   - ErrTimeout: timeout occurred waiting for the heartbeat stream to establish connection
+//   - ErrAcceptStream: failed to accept a multiplexing stream
 func (s *Server) Accept() (*ClientConn, error) {
 	client, err := s.server.Accept()
 	if err != nil {

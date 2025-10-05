@@ -20,12 +20,29 @@ type ClientConn struct {
 	ctx     context.Context
 }
 
-// OpenStream opens a named stream to communicate with the server.
+// OpenStream opens a named stream to communicate with the client.
+//
+// Possible errors:
+//   - ErrNameTooLong: name for stream is too long
+//   - ErrCtxCancelled: context was cancelled while waiting for a stream to establish connection
+//   - ErrTimeout: timeout occurred waiting for the stream to establish connection
+//   - ErrOpenStream: failed to open a multiplexing stream
+//   - ErrWrite: failed to send headers through the stream
+//   - ErrShortWrite: headers sent were shorter than expected
+//   - ErrRead: failed to receive headers from the stream
 func (cn *ClientConn) OpenStream(name string, timeout time.Duration) (*intSmux.Stream, error) {
 	return cn.manager.Open(name, timeout)
 }
 
 // AcceptStream accepts an incoming named stream from the client.
+//
+// Possible errors:
+//   - ErrNameTooLong: name for stream is too long
+//   - ErrCtxCancelled: context was cancelled while waiting for a stream to establish connection
+//   - ErrTimeout: timeout occurred waiting for the stream to establish connection
+//   - ErrAcceptStream: failed to accept a multiplexing stream
+//   - ErrRead: failed to receive headers from the stream
+//   - ErrWrite: failed to send headers through the stream
 func (cn *ClientConn) AcceptStream(name string, timeout time.Duration) (*intSmux.Stream, error) {
 	return cn.manager.Accept(name, timeout)
 }

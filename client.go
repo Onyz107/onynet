@@ -26,7 +26,20 @@ type Client struct {
 	ctx     context.Context
 }
 
-// Dial connects to an OnyNet server, performs optional authentication (with publicKey being nil), and returns a client.
+// Dial connects to an OnyNet server, optionally authenticates (if publicKey is provided), and returns a client.
+//
+// Possible errors:
+//   - ErrDial: failed to dial the target address
+//   - ErrBadAddr: the given address was invalid in the used context
+//   - ErrPublicKey: failed to encrypt authentication challenges
+//   - ErrWrite: failed to send headers to the server
+//   - ErrShortWrite: headers sent were shorter than expected
+//   - ErrRead: failed to receive headers from the server
+//   - ErrCreateSession: failed to create a multiplexing session
+//   - ErrHeartbeatStream: failed to open the heartbeat stream
+//   - ErrCtxCancelled: context was cancelled while waiting for the heartbeat stream to establish connection
+//   - ErrTimeout: timeout occurred waiting for the heartbeat stream to establish connection
+//   - ErrOpenStream: failed to open a multiplexing stream
 func Dial(addr net.Addr, publicKey *rsa.PublicKey, ctx context.Context) (*Client, error) {
 	client, err := kcp.Dial(addr, ctx)
 	if err != nil {
@@ -74,11 +87,28 @@ func Dial(addr net.Addr, publicKey *rsa.PublicKey, ctx context.Context) (*Client
 }
 
 // OpenStream opens a named stream to communicate with the server.
+//
+// Possible errors:
+//   - ErrNameTooLong: name for stream is too long
+//   - ErrCtxCancelled: context was cancelled while waiting for a stream to establish connection
+//   - ErrTimeout: timeout occurred waiting for the stream to establish connection
+//   - ErrOpenStream: failed to open a multiplexing stream
+//   - ErrWrite: failed to send headers through the stream
+//   - ErrShortWrite: headers sent were shorter than expected
+//   - ErrRead: failed to receive headers from the stream
 func (c *Client) OpenStream(name string, timeout time.Duration) (*intSmux.Stream, error) {
 	return c.manager.Open(name, timeout)
 }
 
-// AcceptStream accepts an incoming named stream.
+// AcceptStream accepts an incoming named stream from the server.
+//
+// Possible errors:
+//   - ErrNameTooLong: name for stream is too long
+//   - ErrCtxCancelled: context was cancelled while waiting for a stream to establish connection
+//   - ErrTimeout: timeout occurred waiting for the stream to establish connection
+//   - ErrAcceptStream: failed to accept a multiplexing stream
+//   - ErrRead: failed to receive headers from the stream
+//   - ErrWrite: failed to send headers through the stream
 func (c *Client) AcceptStream(name string, timeout time.Duration) (*intSmux.Stream, error) {
 	return c.manager.Accept(name, timeout)
 }

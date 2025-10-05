@@ -29,7 +29,6 @@ var (
 var (
 	ErrAcceptStream = errors.New("failed to accept stream")
 	ErrOpenStream   = errors.New("failed to open stream")
-	ErrSetDeadline  = errors.New("failed to set deadline")
 	ErrNameMismatch = errors.New("name mismatch")
 	ErrTimeout      = errors.New("timeout")
 	ErrNameTooLong  = errors.New("name too long")
