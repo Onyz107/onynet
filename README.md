@@ -386,3 +386,6 @@ cancel()
 - `Server.GetClients()` and `Server.GetClient()` are thread-safe
 - Multiple goroutines can safely call `Accept()` and `OpenStream()`
 - Individual streams should not be used concurrently from multiple goroutines
+
+
+### [Benchmarks](https://github.com/Onyz107/onynet/benchmarks/benchmarks.md)
