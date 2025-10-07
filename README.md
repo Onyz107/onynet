@@ -388,4 +388,4 @@ cancel()
 - Individual streams should not be used concurrently from multiple goroutines
 
 
-### [Benchmarks](https://github.com/Onyz107/onynet/benchmarks/benchmarks.md)
+### [Benchmarks](https://github.com/Onyz107/onynet/blob/main/benchmarks/benchmarks.md)
