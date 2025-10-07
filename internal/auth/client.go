@@ -28,8 +28,10 @@ func AuthorizeSelfClient(conn net.Conn, publicKey *rsa.PublicKey) (aesKey []byte
 		return nil, errors.Join(intErrors.ErrPublickey, err)
 	}
 
-	header := headerPool.Get().([]byte)
-	defer headerPool.Put(header)
+	headerPtr := headerPool.Get().(*[]byte)
+	defer headerPool.Put(headerPtr)
+	header := *headerPtr
+
 	length := uint64(len(ciphertext))
 	binary.BigEndian.PutUint64(header, length)
 
@@ -72,8 +74,10 @@ func AuthorizeServer(conn net.Conn, publicKey *rsa.PublicKey) error {
 		return intErrors.ErrShortWrite
 	}
 
-	header := headerPool.Get().([]byte)
-	defer headerPool.Put(header)
+	headerPtr := headerPool.Get().(*[]byte)
+	defer headerPool.Put(headerPtr)
+	header := *headerPtr
+
 	if _, err := io.ReadFull(conn, header); err != nil {
 		return errors.Join(intErrors.ErrRead, err)
 	}

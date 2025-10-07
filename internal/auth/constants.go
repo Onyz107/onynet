@@ -1,17 +1,21 @@
 package auth
 
-import "sync"
+import (
+	"sync"
+)
 
 const serverChallengeLength = 32
 
 var serverChallengePool = sync.Pool{
 	New: func() any {
-		return make([]byte, serverChallengeLength)
+		buf := make([]byte, serverChallengeLength)
+		return &buf
 	},
 }
 
 var headerPool = sync.Pool{
 	New: func() any {
-		return make([]byte, 8)
+		buf := make([]byte, 8)
+		return &buf
 	},
 }

@@ -36,8 +36,9 @@ func NewStreamedReceiver(conn net.Conn, timeout time.Duration) io.ReadCloser {
 
 // ReceiveSerialized reads length-prefixed serialized data.
 func ReceiveSerialized(conn net.Conn, buf []byte, timeout time.Duration) (uint64, error) {
-	header := headerPool.Get().([]byte)
-	defer headerPool.Put(header)
+	headerPtr := headerPool.Get().(*[]byte)
+	defer headerPool.Put(headerPtr)
+	header := *headerPtr
 
 	if err := Receive(conn, header, timeout); err != nil {
 		return 0, err

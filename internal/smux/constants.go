@@ -25,6 +25,7 @@ type Communicator interface {
 
 var headerPool = sync.Pool{
 	New: func() any {
-		return make([]byte, 2)
+		buf := make([]byte, 2)
+		return &buf
 	},
 }

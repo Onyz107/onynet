@@ -20,8 +20,9 @@ func AuthorizeSelfServer(conn net.Conn, privateKey *rsa.PrivateKey) error {
 	conn.SetDeadline(time.Now().Add(5 * time.Second))
 	defer conn.SetDeadline(time.Time{})
 
-	challenge := serverChallengePool.Get().([]byte)
-	defer serverChallengePool.Put(challenge)
+	challengePtr := serverChallengePool.Get().(*[]byte)
+	defer serverChallengePool.Put(challengePtr)
+	challenge := *challengePtr
 
 	if _, err := io.ReadFull(conn, challenge); err != nil {
 		return errors.Join(intErrors.ErrRead, err)
@@ -33,8 +34,10 @@ func AuthorizeSelfServer(conn net.Conn, privateKey *rsa.PrivateKey) error {
 		return errors.Join(intErrors.ErrPrivateKey, err)
 	}
 
-	header := headerPool.Get().([]byte)
-	defer headerPool.Put(header)
+	headerPtr := headerPool.Get().(*[]byte)
+	defer headerPool.Put(headerPtr)
+	header := *headerPtr
+
 	length := uint64(len(signature))
 	binary.BigEndian.PutUint64(header, length)
 
@@ -64,8 +67,9 @@ func AuthorizeClient(conn net.Conn, privateKey *rsa.PrivateKey) (aesKey []byte, 
 	conn.SetDeadline(time.Now().Add(5 * time.Second))
 	defer conn.SetDeadline(time.Time{})
 
-	header := headerPool.Get().([]byte)
-	defer headerPool.Put(header)
+	headerPtr := headerPool.Get().(*[]byte)
+	defer headerPool.Put(headerPtr)
+	header := *headerPtr
 
 	logger.Log.Debug("AuthorizeClient: receiving header")
 	if _, err := io.ReadFull(conn, header); err != nil {

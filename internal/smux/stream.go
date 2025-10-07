@@ -59,6 +59,7 @@ func (s *Stream) NewStreamedSender(timeout time.Duration) io.WriteCloser {
 }
 
 // SendSerialized sends serialized data with length header.
+// SendSerialized adds 8 bytes to the data for length prefixing.
 //
 // Possible errors:
 //   - ErrWrite: failed to send data through the stream
@@ -68,6 +69,7 @@ func (s *Stream) SendSerialized(b []byte, timeout time.Duration) error {
 }
 
 // SendEncrypted sends AES-GCM encrypted data.
+// SendEncrypted adds 24 bytes to the data for encryption and length prefixing.
 //
 // Possible errors:
 //   - ErrWrite: failed to send data through the stream
@@ -106,6 +108,7 @@ func (s *Stream) NewStreamedReceiver(timeout time.Duration) io.ReadCloser {
 }
 
 // ReceiveSerialized reads serialized data with length header.
+// The buffer provided should be at least 8 bytes bigger than the data expected to receive.
 //
 // Possible errors:
 //   - ErrSmallBuffer: the buffer provided was too small to receive the incoming data
@@ -115,6 +118,7 @@ func (s *Stream) ReceiveSerialized(b []byte, timeout time.Duration) (uint64, err
 }
 
 // ReceiveEncrypted reads AES-GCM encrypted data.
+// The buffer provided should be at least 28 bytes bigger than the data expected to receive.
 //
 // Possible errors:
 //   - ErrAesKey: the aesKey is nil, meaning authentication is not enabled

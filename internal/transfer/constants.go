@@ -4,6 +4,7 @@ import "sync"
 
 var headerPool = sync.Pool{
 	New: func() any {
-		return make([]byte, 8)
+		buf := make([]byte, 8)
+		return &buf
 	},
 }

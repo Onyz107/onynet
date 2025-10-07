@@ -13,6 +13,7 @@ import (
 
 	intErrors "github.com/Onyz107/onynet/errors"
 	"github.com/Onyz107/onynet/internal/crypto"
+	"github.com/Onyz107/onynet/internal/logger"
 )
 
 // Send writes bytes to conn with optional timeout.
@@ -22,6 +23,7 @@ func Send(conn net.Conn, data []byte, timeout time.Duration) error {
 	}
 	defer conn.SetWriteDeadline(time.Time{})
 
+	logger.Log.Debugf("Writing %d bytes of data to %s", len(data), conn.RemoteAddr().String())
 	n, err := conn.Write(data)
 	if err != nil {
 		return errors.Join(intErrors.ErrWrite, err)
@@ -29,6 +31,7 @@ func Send(conn net.Conn, data []byte, timeout time.Duration) error {
 	if n != len(data) {
 		return errors.Join(intErrors.ErrShortWrite, fmt.Errorf("sent %d bytes instead of %d", n, len(data)))
 	}
+	logger.Log.Debugf("Sent %d bytes to %s", len(data), conn.RemoteAddr().String())
 
 	return nil
 }
@@ -41,8 +44,10 @@ func NewStreamedSender(conn net.Conn, timeout time.Duration) io.WriteCloser {
 
 // SendSerialized sends length-prefixed data.
 func SendSerialized(conn net.Conn, data []byte, timeout time.Duration) error {
-	header := headerPool.Get().([]byte)
-	defer headerPool.Put(header)
+	headerPtr := headerPool.Get().(*[]byte)
+	defer headerPool.Put(headerPtr)
+	header := *headerPtr
+
 	length := uint64(len(data))
 	binary.BigEndian.PutUint64(header, length)
 

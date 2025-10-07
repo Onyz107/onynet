@@ -214,3 +214,43 @@ func TestOnlyServerAuth(t *testing.T) {
 
 	serverAuth(t, clientConn)
 }
+
+func BenchmarkAuth(b *testing.B) {
+	server := newServer(b)
+	defer server.Close()
+
+	client := newClient(b)
+	defer client.Close()
+
+	clientConn, err := server.Accept()
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer clientConn.Close()
+
+	buf := make([]byte, 1)
+	clientConn.Read(buf)
+
+	priv := parsePrivateKey(b, privateKey)
+	pub := parsePublicKey(b, publicKey)
+
+	b.ResetTimer()
+	for b.Loop() {
+		var wg sync.WaitGroup
+		wg.Add(2)
+
+		go func() {
+			defer wg.Done()
+			auth.AuthorizeClient(clientConn, priv)
+			auth.AuthorizeSelfServer(clientConn, priv)
+		}()
+
+		go func() {
+			defer wg.Done()
+			auth.AuthorizeSelfClient(client, pub)
+			auth.AuthorizeServer(client, pub)
+		}()
+
+		wg.Wait()
+	}
+}
