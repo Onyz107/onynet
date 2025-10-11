@@ -16,21 +16,31 @@ goos: windows
 goarch: amd64
 pkg: github.com/Onyz107/onynet/internal/crypto
 cpu: Intel(R) Core(TM) i7-8665U CPU @ 1.90GHz
-BenchmarkEncryptAESGCM/size_64-8         	 1567856	       873.4 ns/op	  73.27 MB/s	    1392 B/op	       4 allocs/op
-BenchmarkEncryptAESGCM/size_512-8        	  863097	      1323 ns/op	 387.07 MB/s	    1872 B/op	       4 allocs/op
-BenchmarkEncryptAESGCM/size_1024-8       	  725403	      1685 ns/op	 607.81 MB/s	    2448 B/op	       4 allocs/op
-BenchmarkEncryptAESGCM/size_4096-8       	  341286	      3627 ns/op	1129.23 MB/s	    6160 B/op	       4 allocs/op
-BenchmarkEncryptAESGCM/size_16384-8      	  109008	     10781 ns/op	1519.71 MB/s	   19728 B/op	       4 allocs/op
-BenchmarkEncryptAESGCM/size_65536-8      	   30702	     39107 ns/op	1675.81 MB/s	   75024 B/op	       4 allocs/op
-BenchmarkEncryptAESGCM/size_262144-8     	    8428	    143324 ns/op	1829.03 MB/s	  271632 B/op	       4 allocs/op
-BenchmarkDecryptAESGCM/size_64-8         	 1436178	       836.5 ns/op	  76.51 MB/s	    1344 B/op	       3 allocs/op
-BenchmarkDecryptAESGCM/size_512-8        	 1000000	      1112 ns/op	 460.39 MB/s	    1792 B/op	       3 allocs/op
-BenchmarkDecryptAESGCM/size_1024-8       	  811314	      1471 ns/op	 696.33 MB/s	    2304 B/op	       3 allocs/op
-BenchmarkDecryptAESGCM/size_4096-8       	  304518	      3479 ns/op	1177.34 MB/s	    5376 B/op	       3 allocs/op
-BenchmarkDecryptAESGCM/size_16384-8      	  101857	     10607 ns/op	1544.67 MB/s	   17664 B/op	       3 allocs/op
-BenchmarkDecryptAESGCM/size_65536-8      	   31417	     38024 ns/op	1723.55 MB/s	   66816 B/op	       3 allocs/op
-BenchmarkDecryptAESGCM/size_262144-8     	    8800	    145891 ns/op	1796.84 MB/s	  263424 B/op	       3 allocs/op
+BenchmarkEncryptAESGCM/size_64-8                 3209142               372.2 ns/op       171.97 MB/s         112 B/op          2 allocs/op
+BenchmarkEncryptAESGCM/size_512-8                2086849               583.3 ns/op       877.80 MB/s         592 B/op          2 allocs/op
+BenchmarkEncryptAESGCM/size_1024-8               1256118              1370 ns/op         747.50 MB/s        1168 B/op          2 allocs/op
+BenchmarkEncryptAESGCM/size_4096-8                328135              3682 ns/op        1112.51 MB/s        4880 B/op          2 allocs/op
+BenchmarkEncryptAESGCM/size_16384-8               110348             10320 ns/op        1587.64 MB/s       18448 B/op          2 allocs/op
+BenchmarkEncryptAESGCM/size_65536-8                31131             39273 ns/op        1668.75 MB/s       73744 B/op          2 allocs/op
+BenchmarkEncryptAESGCM/size_262144-8                7550            154362 ns/op        1698.24 MB/s      270353 B/op          2 allocs/op
 PASS
+ok      github.com/Onyz107/onynet/internal/crypto       11.717s
+```
+
+```bash
+goos: windows       
+goarch: amd64
+pkg: github.com/Onyz107/onynet/internal/crypto
+cpu: Intel(R) Core(TM) i7-8665U CPU @ 1.90GHz
+BenchmarkDecryptAESGCM/size_64-8                 8972324               133.0 ns/op       481.25 MB/s           0 B/op          0 allocs/op
+BenchmarkDecryptAESGCM/size_512-8                5897886               207.3 ns/op      2470.12 MB/s           0 B/op          0 allocs/op
+BenchmarkDecryptAESGCM/size_1024-8               3670878               330.6 ns/op      3096.96 MB/s           0 B/op          0 allocs/op
+BenchmarkDecryptAESGCM/size_4096-8               1000000              1004 ns/op        4080.27 MB/s           0 B/op          0 allocs/op
+BenchmarkDecryptAESGCM/size_16384-8               150904              7245 ns/op        2261.49 MB/s       16390 B/op          1 allocs/op
+BenchmarkDecryptAESGCM/size_65536-8                42973             26702 ns/op        2454.34 MB/s       65558 B/op          1 allocs/op
+BenchmarkDecryptAESGCM/size_262144-8               12049             97121 ns/op        2699.15 MB/s      262229 B/op          1 allocs/op
+PASS
+ok      github.com/Onyz107/onynet/internal/crypto       10.438s
 ```
 
 ```bash
