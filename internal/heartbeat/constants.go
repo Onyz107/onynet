@@ -11,6 +11,7 @@ const (
 
 var bufPool = sync.Pool{
 	New: func() any {
-		return make([]byte, 4)
+		buf := make([]byte, 4)
+		return &buf
 	},
 }

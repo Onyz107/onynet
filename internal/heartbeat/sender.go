@@ -19,8 +19,9 @@ func SendHeartbeat(conn net.Conn, ctx context.Context) error {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
-	buf := bufPool.Get().([]byte)
-	defer bufPool.Put(buf)
+	bufPtr := bufPool.Get().(*[]byte)
+	defer bufPool.Put(bufPtr)
+	buf := *bufPtr
 
 	for {
 		select {
