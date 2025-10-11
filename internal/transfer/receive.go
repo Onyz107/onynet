@@ -16,12 +16,9 @@ import (
 
 // Receive reads exactly len(buf) bytes from conn.
 func Receive(conn net.Conn, buf []byte, timeout time.Duration) error {
-	if timeout > 0 {
-		conn.SetReadDeadline(time.Now().Add(timeout))
-	}
-	defer conn.SetReadDeadline(time.Time{})
+	timedConn := getTimedReadWriteCloser(conn, timeout)
 
-	if _, err := io.ReadFull(conn, buf); err != nil {
+	if _, err := io.ReadFull(timedConn, buf); err != nil {
 		return errors.Join(intErrors.ErrRead, err)
 	}
 
@@ -31,7 +28,7 @@ func Receive(conn net.Conn, buf []byte, timeout time.Duration) error {
 // NewStreamedReceiver returns an io.ReadCloser that allows
 // the caller to directly read data from the stream and set a timeout.
 func NewStreamedReceiver(conn net.Conn, timeout time.Duration) io.ReadCloser {
-	return &timedReader{r: conn, timeout: timeout}
+	return getTimedReadWriteCloser(conn, timeout)
 }
 
 // ReceiveSerialized reads length-prefixed serialized data.

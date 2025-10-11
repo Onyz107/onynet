@@ -18,13 +18,10 @@ import (
 
 // Send writes bytes to conn with optional timeout.
 func Send(conn net.Conn, data []byte, timeout time.Duration) error {
-	if timeout > 0 {
-		conn.SetWriteDeadline(time.Now().Add(timeout))
-	}
-	defer conn.SetWriteDeadline(time.Time{})
+	timedConn := getTimedReadWriteCloser(conn, timeout)
 
 	logger.Log.Debugf("Writing %d bytes of data to %s", len(data), conn.RemoteAddr().String())
-	n, err := conn.Write(data)
+	n, err := timedConn.Write(data)
 	if err != nil {
 		return errors.Join(intErrors.ErrWrite, err)
 	}
@@ -39,7 +36,7 @@ func Send(conn net.Conn, data []byte, timeout time.Duration) error {
 // NewStreamedSender returns an io.WriteCloser that allows
 // the caller to directly write data to the stream and set a timeout.
 func NewStreamedSender(conn net.Conn, timeout time.Duration) io.WriteCloser {
-	return &timedWriter{w: conn, timeout: timeout}
+	return getTimedReadWriteCloser(conn, timeout)
 }
 
 // SendSerialized sends length-prefixed data.
