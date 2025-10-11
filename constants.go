@@ -7,5 +7,5 @@ type Communicator interface {
 }
 
 type Stream struct {
-	smux.Stream
+	*smux.Stream
 }
