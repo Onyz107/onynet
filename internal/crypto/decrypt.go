@@ -1,8 +1,6 @@
 package crypto
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
 	"errors"
 
 	intErrors "github.com/Onyz107/onynet/errors"
@@ -10,14 +8,9 @@ import (
 
 // DecryptAESGCM decrypts AES-GCM encrypted data with the given key.
 func DecryptAESGCM(data, key []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
+	gcm, err := getGCM(key)
 	if err != nil {
-		return nil, errors.Join(intErrors.ErrCipher, err)
-	}
-
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, errors.Join(intErrors.ErrGCM, err)
+		return nil, err
 	}
 
 	nonceSize := gcm.NonceSize()
@@ -28,7 +21,11 @@ func DecryptAESGCM(data, key []byte) ([]byte, error) {
 	nonce := data[:nonceSize]
 	ciphertext := data[nonceSize:]
 
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	bufPtr := decryptionBufPool.Get().(*[]byte)
+	defer decryptionBufPool.Put(bufPtr)
+	buf := (*bufPtr)[:0]
+
+	plaintext, err := gcm.Open(buf, nonce, ciphertext, nil)
 	if err != nil {
 		return nil, errors.Join(intErrors.ErrDecrypt, err)
 	}

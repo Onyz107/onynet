@@ -1,6 +1,7 @@
 package crypto_test
 
 import (
+	"bytes"
 	"crypto/rand"
 	"fmt"
 	"testing"
@@ -13,6 +14,29 @@ func generateTestData(size int) []byte {
 	data := make([]byte, size)
 	rand.Read(data)
 	return data
+}
+
+func TestEncryptDecrypt(t *testing.T) {
+	originalData := generateTestData(16)
+	key := crypto.GenerateAESKey(256)
+
+	encryptedData, err := crypto.EncryptAESGCM(key, originalData)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if bytes.Equal(encryptedData, originalData) {
+		t.Fatal("encrypted data is equal to original data")
+	}
+
+	decryptedData, err := crypto.DecryptAESGCM(key, encryptedData)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !bytes.Equal(decryptedData, originalData) {
+		t.Fatal("decrypted data is not equal to original data")
+	}
 }
 
 // BenchmarkEncryptAESGCM tests AES-GCM encryption performance
