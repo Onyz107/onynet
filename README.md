@@ -176,7 +176,7 @@ func main() {
 	}
 	defer client.Close()
 
-	stream, err := client.OpenStream("testStream", 0)
+	stream, err := client.OpenStream("testStream", context.Background(), 0)
 	if err != nil {
 		panic(err)
 	}
