@@ -92,7 +92,7 @@ func (s *Server) Accept() (*ClientConn, error) {
 	s.clients[id] = onynetClientConn
 	s.mu.Unlock()
 
-	heartbeatStream, err := onynetClientConn.AcceptStream("heartbeatStream", 5*time.Second)
+	heartbeatStream, err := onynetClientConn.AcceptStream("heartbeatStream", onynetClientConn.ctx, 5*time.Second)
 	if err != nil {
 		delete(s.clients, id)
 		onynetClientConn.Close()

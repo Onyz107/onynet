@@ -24,7 +24,7 @@ func NewManager(session *smux.Session, aesKey []byte, ctx context.Context) *Mana
 
 	go func() {
 		select {
-		case <-ctx.Done():
+		case <-manager.ctx.Done():
 			logger.Log.Debug("closing smux session because of context cancellation")
 			manager.Close()
 			return
@@ -37,15 +37,15 @@ func NewManager(session *smux.Session, aesKey []byte, ctx context.Context) *Mana
 }
 
 // Accept waits for a stream with a given name.
-func (m *Manager) Accept(name string, timeout time.Duration) (*Stream, error) {
+func (m *Manager) Accept(name string, ctx context.Context, timeout time.Duration) (*Stream, error) {
 	if len(name) > 0xFFFF {
 		return nil, intErrors.ErrNameTooLong
 	}
 
-	ctx := m.ctx
+	inCtx := ctx
 	if timeout > 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(m.ctx, timeout)
+		inCtx, cancel = context.WithTimeout(m.ctx, timeout)
 		defer cancel()
 	}
 
@@ -60,14 +60,14 @@ func (m *Manager) Accept(name string, timeout time.Duration) (*Stream, error) {
 		time.Sleep(50 * time.Millisecond)
 		select {
 
-		case <-ctx.Done():
-			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		case <-inCtx.Done():
+			if errors.Is(inCtx.Err(), context.DeadlineExceeded) {
 				return nil, intErrors.ErrTimeout
 			}
 			return nil, intErrors.ErrCtxCancelled
 
 		default:
-			stream, err := m.acceptStream(name, streamTimeout)
+			stream, err := m.acceptStream(name, ctx, streamTimeout)
 			if err != nil {
 				if errors.Is(err, smux.ErrTimeout) || errors.Is(err, intErrors.ErrNameMismatch) {
 					logger.Log.Debugf("smux/manager Accept: got non crticial error: %v continuing", err)
@@ -80,7 +80,7 @@ func (m *Manager) Accept(name string, timeout time.Duration) (*Stream, error) {
 	}
 }
 
-func (m *Manager) acceptStream(name string, timeout time.Duration) (*Stream, error) {
+func (m *Manager) acceptStream(name string, ctx context.Context, timeout time.Duration) (*Stream, error) {
 	stream, err := m.session.AcceptStream()
 	if err != nil {
 		return nil, errors.Join(intErrors.ErrAcceptStream, err)
@@ -127,7 +127,8 @@ func (m *Manager) acceptStream(name string, timeout time.Duration) (*Stream, err
 	logger.Log.Debugf("smux/manager acceptStream: wrote ok")
 
 	stream.SetDeadline(time.Time{})
-	wrapped := &Stream{stream: stream, aesKey: m.aesKey, ctx: m.ctx}
+
+	wrapped := &Stream{stream: stream, aesKey: m.aesKey, ctx: ctx}
 	go func() {
 		select {
 		case <-wrapped.ctx.Done():
@@ -143,15 +144,15 @@ func (m *Manager) acceptStream(name string, timeout time.Duration) (*Stream, err
 }
 
 // Open creates a new stream with a given name.
-func (m *Manager) Open(name string, timeout time.Duration) (*Stream, error) {
+func (m *Manager) Open(name string, ctx context.Context, timeout time.Duration) (*Stream, error) {
 	if len(name) > 0xFFFF {
 		return nil, intErrors.ErrNameTooLong
 	}
 
-	ctx := m.ctx
+	inCtx := ctx
 	if timeout > 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(m.ctx, timeout)
+		inCtx, cancel = context.WithTimeout(m.ctx, timeout)
 		defer cancel()
 	}
 
@@ -166,14 +167,14 @@ func (m *Manager) Open(name string, timeout time.Duration) (*Stream, error) {
 		time.Sleep(50 * time.Millisecond)
 		select {
 
-		case <-ctx.Done():
-			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		case <-inCtx.Done():
+			if errors.Is(inCtx.Err(), context.DeadlineExceeded) {
 				return nil, intErrors.ErrTimeout
 			}
 			return nil, intErrors.ErrCtxCancelled
 
 		default:
-			stream, err := m.openStream(name, streamTimeout)
+			stream, err := m.openStream(name, ctx, streamTimeout)
 			if err != nil {
 				if errors.Is(err, smux.ErrTimeout) || errors.Is(err, intErrors.ErrNameMismatch) {
 					logger.Log.Debugf("smux/manager Open: got noncrticial error: %v continuing", err)
@@ -186,7 +187,7 @@ func (m *Manager) Open(name string, timeout time.Duration) (*Stream, error) {
 	}
 }
 
-func (m *Manager) openStream(name string, timeout time.Duration) (*Stream, error) {
+func (m *Manager) openStream(name string, ctx context.Context, timeout time.Duration) (*Stream, error) {
 	stream, err := m.session.OpenStream()
 	if err != nil {
 		return nil, errors.Join(intErrors.ErrOpenStream, err)
@@ -243,7 +244,8 @@ func (m *Manager) openStream(name string, timeout time.Duration) (*Stream, error
 	}
 
 	stream.SetDeadline(time.Time{})
-	wrapped := &Stream{stream: stream, aesKey: m.aesKey, ctx: m.ctx}
+
+	wrapped := &Stream{stream: stream, aesKey: m.aesKey, ctx: ctx}
 	go func() {
 		select {
 		case <-wrapped.ctx.Done():

@@ -70,7 +70,7 @@ func Dial(addr net.Addr, publicKey *rsa.PublicKey, ctx context.Context) (*Client
 
 	onynetClient := &Client{client: client, manager: manager, ctx: ctx}
 
-	heartbeatStream, err := onynetClient.OpenStream("heartbeatStream", 5*time.Second)
+	heartbeatStream, err := onynetClient.OpenStream("heartbeatStream", onynetClient.ctx, 5*time.Second)
 	if err != nil {
 		onynetClient.Close()
 		return nil, errors.Join(intErrors.ErrHeartbeatStream, err)
@@ -87,6 +87,7 @@ func Dial(addr net.Addr, publicKey *rsa.PublicKey, ctx context.Context) (*Client
 }
 
 // OpenStream opens a named stream to communicate with the server.
+// The ctx argument defines the stream's deadline while timeout defines the handshake's deadline.
 //
 // Possible errors:
 //   - ErrNameTooLong: name for stream is too long
@@ -96,11 +97,12 @@ func Dial(addr net.Addr, publicKey *rsa.PublicKey, ctx context.Context) (*Client
 //   - ErrWrite: failed to send headers through the stream
 //   - ErrShortWrite: headers sent were shorter than expected
 //   - ErrRead: failed to receive headers from the stream
-func (c *Client) OpenStream(name string, timeout time.Duration) (*intSmux.Stream, error) {
-	return c.manager.Open(name, timeout)
+func (c *Client) OpenStream(name string, ctx context.Context, timeout time.Duration) (*intSmux.Stream, error) {
+	return c.manager.Open(name, ctx, timeout)
 }
 
 // AcceptStream accepts an incoming named stream from the server.
+// The ctx argument defines the stream's deadline while timeout defines the handshake's deadline.
 //
 // Possible errors:
 //   - ErrNameTooLong: name for stream is too long
@@ -109,8 +111,8 @@ func (c *Client) OpenStream(name string, timeout time.Duration) (*intSmux.Stream
 //   - ErrAcceptStream: failed to accept a multiplexing stream
 //   - ErrRead: failed to receive headers from the stream
 //   - ErrWrite: failed to send headers through the stream
-func (c *Client) AcceptStream(name string, timeout time.Duration) (*intSmux.Stream, error) {
-	return c.manager.Accept(name, timeout)
+func (c *Client) AcceptStream(name string, ctx context.Context, timeout time.Duration) (*intSmux.Stream, error) {
+	return c.manager.Accept(name, ctx, timeout)
 }
 
 // Close gracefully closes client connections and streams.

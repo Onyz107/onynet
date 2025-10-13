@@ -21,6 +21,7 @@ type ClientConn struct {
 }
 
 // OpenStream opens a named stream to communicate with the client.
+// The ctx argument defines the stream's deadline while timeout defines the handshake's deadline.
 //
 // Possible errors:
 //   - ErrNameTooLong: name for stream is too long
@@ -30,11 +31,12 @@ type ClientConn struct {
 //   - ErrWrite: failed to send headers through the stream
 //   - ErrShortWrite: headers sent were shorter than expected
 //   - ErrRead: failed to receive headers from the stream
-func (cn *ClientConn) OpenStream(name string, timeout time.Duration) (*intSmux.Stream, error) {
-	return cn.manager.Open(name, timeout)
+func (cn *ClientConn) OpenStream(name string, ctx context.Context, timeout time.Duration) (*intSmux.Stream, error) {
+	return cn.manager.Open(name, ctx, timeout)
 }
 
 // AcceptStream accepts an incoming named stream from the client.
+// The ctx argument defines the stream's deadline while timeout defines the handshake's deadline.
 //
 // Possible errors:
 //   - ErrNameTooLong: name for stream is too long
@@ -43,8 +45,8 @@ func (cn *ClientConn) OpenStream(name string, timeout time.Duration) (*intSmux.S
 //   - ErrAcceptStream: failed to accept a multiplexing stream
 //   - ErrRead: failed to receive headers from the stream
 //   - ErrWrite: failed to send headers through the stream
-func (cn *ClientConn) AcceptStream(name string, timeout time.Duration) (*intSmux.Stream, error) {
-	return cn.manager.Accept(name, timeout)
+func (cn *ClientConn) AcceptStream(name string, ctx context.Context, timeout time.Duration) (*intSmux.Stream, error) {
+	return cn.manager.Accept(name, ctx, timeout)
 }
 
 // LocalAddr returns the client's local address.
