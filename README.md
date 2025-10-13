@@ -102,7 +102,7 @@ func main() {
 	defer clientConn.Close()
 	log.Printf("Accepted new client: %s\n", clientConn.RemoteAddr().String())
 
-	stream, err := clientConn.AcceptStream("testStream", 0)
+	stream, err := clientConn.AcceptStream("testStream", context.Background(), 0)
 	if err != nil {
 		panic(err)
 	}
@@ -230,12 +230,12 @@ Streams are identified by names, making it easy to organize different types of c
 
 ```go
 // Server accepts streams
-dataStream, _ := client.AcceptStream("data", 5*time.Second)
-controlStream, _ := client.AcceptStream("control", 5*time.Second)
+dataStream, _ := client.AcceptStream("data", context.Background(), 5*time.Second)
+controlStream, _ := client.AcceptStream("control", context.Background(), 5*time.Second)
 
 // Client opens streams
-dataStream, _ := client.OpenStream("data", 5*time.Second)
-controlStream, _ := client.OpenStream("control", 5*time.Second)
+dataStream, _ := client.OpenStream("data", context.Background(), 5*time.Second)
+controlStream, _ := client.OpenStream("control", context.Background(), 5*time.Second)
 ```
 
 ### Transfer Methods
@@ -345,7 +345,7 @@ OnyNet provides structured errors in the `errors` package:
 ```go
 import intErrors "github.com/Onyz107/onynet/errors"
 
-_, err := client.OpenStream("test", 5*time.Second)
+_, err := client.OpenStream("test", context.Background(), 5*time.Second)
 if errors.Is(err, intErrors.ErrTimeout) {
     // Handle timeout
 } else if errors.Is(err, intErrors.ErrCtxCancelled) {
@@ -384,7 +384,7 @@ cancel()
 ## Thread Safety
 
 - `Server.GetClients()` and `Server.GetClient()` are thread-safe
-- Multiple goroutines can safely call `Accept()` and `OpenStream()`
+- Multiple goroutines can safely call `AcceptStream()` and `OpenStream()`
 - Individual streams should not be used concurrently from multiple goroutines
 
 
