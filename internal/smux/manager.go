@@ -36,8 +36,8 @@ func NewManager(session *smux.Session, aesKey []byte, ctx context.Context) *Mana
 	return manager
 }
 
-// Accept waits for a stream with a given name.
-func (m *Manager) Accept(name string, ctx context.Context, timeout time.Duration) (*Stream, error) {
+// AcceptStream waits for a stream with a given name.
+func (m *Manager) AcceptStream(name string, ctx context.Context, timeout time.Duration) (*Stream, error) {
 	if len(name) > 0xFFFF {
 		return nil, intErrors.ErrNameTooLong
 	}
@@ -54,7 +54,7 @@ func (m *Manager) Accept(name string, ctx context.Context, timeout time.Duration
 		streamTimeout = 5 * time.Second
 	}
 
-	logger.Log.Debugf("smux/manager Accept: streamTimeout is: %f: context timeout is: %f", streamTimeout.Seconds(), timeout.Seconds())
+	logger.Log.Debugf("smux/manager AcceptStream: streamTimeout is: %f: context timeout is: %f", streamTimeout.Seconds(), timeout.Seconds())
 
 	for {
 		time.Sleep(50 * time.Millisecond)
@@ -67,10 +67,10 @@ func (m *Manager) Accept(name string, ctx context.Context, timeout time.Duration
 			return nil, intErrors.ErrCtxCancelled
 
 		default:
-			stream, err := m.acceptStream(name, ctx, streamTimeout)
+			stream, err := m.accept(name, ctx, streamTimeout)
 			if err != nil {
 				if errors.Is(err, smux.ErrTimeout) || errors.Is(err, intErrors.ErrNameMismatch) {
-					logger.Log.Debugf("smux/manager Accept: got non crticial error: %v continuing", err)
+					logger.Log.Debugf("smux/manager AcceptStream: got non crticial error: %v continuing", err)
 					continue
 				}
 				return nil, err
@@ -80,14 +80,14 @@ func (m *Manager) Accept(name string, ctx context.Context, timeout time.Duration
 	}
 }
 
-func (m *Manager) acceptStream(name string, ctx context.Context, timeout time.Duration) (*Stream, error) {
+func (m *Manager) accept(name string, ctx context.Context, timeout time.Duration) (*Stream, error) {
 	stream, err := m.session.AcceptStream()
 	if err != nil {
 		return nil, errors.Join(intErrors.ErrAcceptStream, err)
 	}
 
 	if timeout > 0 {
-		logger.Log.Debugf("smux/manager acceptStream: stream timeout is: %f", timeout.Seconds())
+		logger.Log.Debugf("smux/manager accept: stream timeout is: %f", timeout.Seconds())
 		stream.SetDeadline(time.Now().Add(timeout))
 	}
 
@@ -95,36 +95,36 @@ func (m *Manager) acceptStream(name string, ctx context.Context, timeout time.Du
 	defer headerPool.Put(headerPtr)
 	header := *headerPtr
 
-	logger.Log.Debugf("smux/manager acceptStream: reading header")
+	logger.Log.Debugf("smux/manager accept: reading header")
 	if _, err := io.ReadFull(stream, header); err != nil {
 		stream.Close()
 		return nil, errors.Join(intErrors.ErrRead, err)
 	}
 	length := binary.BigEndian.Uint16(header)
-	logger.Log.Debugf("smux/manager acceptStream: read header and found length: %d", length)
+	logger.Log.Debugf("smux/manager accept: read header and found length: %d", length)
 
-	logger.Log.Debugf("smux/manager acceptStream: reading name")
+	logger.Log.Debugf("smux/manager accept: reading name")
 	buf := make([]byte, length)
 	if _, err := io.ReadFull(stream, buf); err != nil {
 		stream.Close()
 		return nil, errors.Join(intErrors.ErrRead, err)
 	}
-	logger.Log.Debugf("smux/manager acceptStream: read name as: %s", string(buf))
+	logger.Log.Debugf("smux/manager accept: read name as: %s", string(buf))
 
 	if string(buf) != name {
-		logger.Log.Debugf("smux/manager acceptStream: name mismatch")
-		logger.Log.Debugf("smux/manager acceptStream: writing no ok")
+		logger.Log.Debugf("smux/manager accept: name mismatch")
+		logger.Log.Debugf("smux/manager accept: writing no ok")
 		stream.Write([]byte{0})
 		stream.Close()
 		return nil, intErrors.ErrNameMismatch
 	}
 
-	logger.Log.Debugf("smux/manager acceptStream: writing ok")
+	logger.Log.Debugf("smux/manager accept: writing ok")
 	if _, err := stream.Write([]byte{1}); err != nil {
 		stream.Close()
 		return nil, errors.Join(intErrors.ErrWrite, err)
 	}
-	logger.Log.Debugf("smux/manager acceptStream: wrote ok")
+	logger.Log.Debugf("smux/manager accept: wrote ok")
 
 	stream.SetDeadline(time.Time{})
 
@@ -143,8 +143,8 @@ func (m *Manager) acceptStream(name string, ctx context.Context, timeout time.Du
 	return wrapped, nil
 }
 
-// Open creates a new stream with a given name.
-func (m *Manager) Open(name string, ctx context.Context, timeout time.Duration) (*Stream, error) {
+// OpenStream creates a new stream with a given name.
+func (m *Manager) OpenStream(name string, ctx context.Context, timeout time.Duration) (*Stream, error) {
 	if len(name) > 0xFFFF {
 		return nil, intErrors.ErrNameTooLong
 	}
@@ -161,7 +161,7 @@ func (m *Manager) Open(name string, ctx context.Context, timeout time.Duration) 
 		streamTimeout = 5 * time.Second
 	}
 
-	logger.Log.Debugf("smux/manager Open: streamTimeout is: %f: context timeout is: %f", streamTimeout.Seconds(), timeout.Seconds())
+	logger.Log.Debugf("smux/manager OpenStream: streamTimeout is: %f: context timeout is: %f", streamTimeout.Seconds(), timeout.Seconds())
 
 	for {
 		time.Sleep(50 * time.Millisecond)
@@ -174,10 +174,10 @@ func (m *Manager) Open(name string, ctx context.Context, timeout time.Duration) 
 			return nil, intErrors.ErrCtxCancelled
 
 		default:
-			stream, err := m.openStream(name, ctx, streamTimeout)
+			stream, err := m.open(name, ctx, streamTimeout)
 			if err != nil {
 				if errors.Is(err, smux.ErrTimeout) || errors.Is(err, intErrors.ErrNameMismatch) {
-					logger.Log.Debugf("smux/manager Open: got noncrticial error: %v continuing", err)
+					logger.Log.Debugf("smux/manager OpenStream: got noncrticial error: %v continuing", err)
 					continue
 				}
 				return nil, err
@@ -187,14 +187,14 @@ func (m *Manager) Open(name string, ctx context.Context, timeout time.Duration) 
 	}
 }
 
-func (m *Manager) openStream(name string, ctx context.Context, timeout time.Duration) (*Stream, error) {
+func (m *Manager) open(name string, ctx context.Context, timeout time.Duration) (*Stream, error) {
 	stream, err := m.session.OpenStream()
 	if err != nil {
 		return nil, errors.Join(intErrors.ErrOpenStream, err)
 	}
 
 	if timeout > 0 {
-		logger.Log.Debugf("smux/manager openStream: stream timeout is: %f", timeout.Seconds())
+		logger.Log.Debugf("smux/manager open: stream timeout is: %f", timeout.Seconds())
 		stream.SetDeadline(time.Now().Add(timeout))
 	}
 
@@ -203,10 +203,10 @@ func (m *Manager) openStream(name string, ctx context.Context, timeout time.Dura
 	header := *headerPtr
 
 	length := uint16(len(name))
-	logger.Log.Debugf("smux/manager openStream: found length: %d", length)
+	logger.Log.Debugf("smux/manager open: found length: %d", length)
 	binary.BigEndian.PutUint16(header, length)
 
-	logger.Log.Debugf("smux/manager openStream: writing header")
+	logger.Log.Debugf("smux/manager open: writing header")
 	n, err := stream.Write(header)
 	if err != nil {
 		stream.Close()
@@ -216,9 +216,9 @@ func (m *Manager) openStream(name string, ctx context.Context, timeout time.Dura
 		stream.Close()
 		return nil, intErrors.ErrShortWrite
 	}
-	logger.Log.Debugf("smux/manager openStream: wrote header")
+	logger.Log.Debugf("smux/manager open: wrote header")
 
-	logger.Log.Debugf("smux/manager openStream: writing: %s", name)
+	logger.Log.Debugf("smux/manager open: writing: %s", name)
 	n, err = stream.Write([]byte(name))
 	if err != nil {
 		stream.Close()
@@ -228,9 +228,9 @@ func (m *Manager) openStream(name string, ctx context.Context, timeout time.Dura
 		stream.Close()
 		return nil, intErrors.ErrShortWrite
 	}
-	logger.Log.Debugf("smux/manager openStream: wrote: %s", name)
+	logger.Log.Debugf("smux/manager open: wrote: %s", name)
 
-	logger.Log.Debug("smux/manager openStream: reading ok/no ok")
+	logger.Log.Debug("smux/manager open: reading ok/no ok")
 	buf := make([]byte, 1)
 	if _, err := io.ReadFull(stream, buf); err != nil {
 		stream.Close()
@@ -238,7 +238,7 @@ func (m *Manager) openStream(name string, ctx context.Context, timeout time.Dura
 	}
 
 	if buf[0] != 1 {
-		logger.Log.Debug("smux/manager openStream: received no ok")
+		logger.Log.Debug("smux/manager open: received no ok")
 		stream.Close()
 		return nil, intErrors.ErrNameMismatch
 	}

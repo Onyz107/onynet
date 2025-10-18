@@ -86,7 +86,7 @@ PASS
 ok      github.com/Onyz107/onynet/internal/kcp  2.394s
 ```
 
-#### Server.Accept
+#### Server.AcceptStream
 ```shell
 goos: windows
 goarch: amd64
@@ -104,7 +104,7 @@ ok      github.com/Onyz107/onynet/internal/kcp  1.883s
 
 ### SMUX
 
-#### manager.Accept
+#### manager.AcceptStream
 ```shell
 goos: windows
 goarch: amd64
@@ -118,7 +118,7 @@ PASS
 ok      github.com/Onyz107/onynet/internal/smux 1.639s
 ```
 
-#### manager.Open
+#### manager.OpenStream
 ```shell
 goos: windows
 goarch: amd64

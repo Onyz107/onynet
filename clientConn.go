@@ -32,7 +32,7 @@ type ClientConn struct {
 //   - ErrShortWrite: headers sent were shorter than expected
 //   - ErrRead: failed to receive headers from the stream
 func (cn *ClientConn) OpenStream(name string, ctx context.Context, timeout time.Duration) (*intSmux.Stream, error) {
-	return cn.manager.Open(name, ctx, timeout)
+	return cn.manager.OpenStream(name, ctx, timeout)
 }
 
 // AcceptStream accepts an incoming named stream from the client.
@@ -46,7 +46,7 @@ func (cn *ClientConn) OpenStream(name string, ctx context.Context, timeout time.
 //   - ErrRead: failed to receive headers from the stream
 //   - ErrWrite: failed to send headers through the stream
 func (cn *ClientConn) AcceptStream(name string, ctx context.Context, timeout time.Duration) (*intSmux.Stream, error) {
-	return cn.manager.Accept(name, ctx, timeout)
+	return cn.manager.AcceptStream(name, ctx, timeout)
 }
 
 // LocalAddr returns the client's local address.

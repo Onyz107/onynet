@@ -1,11 +1,17 @@
 package smux
 
 import (
+	"context"
 	"io"
 	"net"
 	"sync"
 	"time"
 )
+
+type Handler interface {
+	OpenStream(name string, ctx context.Context, timeout time.Duration) (*Stream, error)
+	AcceptStream(name string, ctx context.Context, timeout time.Duration) (*Stream, error)
+}
 
 type Communicator interface {
 	net.Conn

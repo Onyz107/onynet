@@ -98,7 +98,7 @@ func Dial(addr net.Addr, publicKey *rsa.PublicKey, ctx context.Context) (*Client
 //   - ErrShortWrite: headers sent were shorter than expected
 //   - ErrRead: failed to receive headers from the stream
 func (c *Client) OpenStream(name string, ctx context.Context, timeout time.Duration) (*intSmux.Stream, error) {
-	return c.manager.Open(name, ctx, timeout)
+	return c.manager.OpenStream(name, ctx, timeout)
 }
 
 // AcceptStream accepts an incoming named stream from the server.
@@ -112,7 +112,7 @@ func (c *Client) OpenStream(name string, ctx context.Context, timeout time.Durat
 //   - ErrRead: failed to receive headers from the stream
 //   - ErrWrite: failed to send headers through the stream
 func (c *Client) AcceptStream(name string, ctx context.Context, timeout time.Duration) (*intSmux.Stream, error) {
-	return c.manager.Accept(name, ctx, timeout)
+	return c.manager.AcceptStream(name, ctx, timeout)
 }
 
 // Close gracefully closes client connections and streams.

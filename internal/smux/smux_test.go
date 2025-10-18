@@ -79,13 +79,13 @@ func BenchmarkManager_Accept(b *testing.B) {
 
 	go func() {
 		for {
-			clientManager.Open("testStream", 0)
+			clientManager.OpenStream("testStream", 0)
 		}
 	}()
 
 	b.ResetTimer()
 	for b.Loop() {
-		serverManager.Accept("testStream", 0)
+		serverManager.AcceptStream("testStream", 0)
 	}
 }
 
@@ -96,13 +96,13 @@ func BenchmarkManager_Open(b *testing.B) {
 
 	go func() {
 		for {
-			serverManager.Accept("testStream", 0)
+			serverManager.AcceptStream("testStream", 0)
 		}
 	}()
 
 	b.ResetTimer()
 	for b.Loop() {
-		clientManager.Open("testStream", 0)
+		clientManager.OpenStream("testStream", 0)
 	}
 }
 
@@ -113,7 +113,7 @@ func BenchmarkStream_Send(b *testing.B) {
 
 	acceptDone := make(chan *intSmux.Stream, 1)
 	go func() {
-		stream, err := serverManager.Accept("benchmarkSend", 0)
+		stream, err := serverManager.AcceptStream("benchmarkSend", 0)
 		if err != nil {
 			b.Error(err)
 			return
@@ -121,7 +121,7 @@ func BenchmarkStream_Send(b *testing.B) {
 		acceptDone <- stream
 	}()
 
-	clientStream, err := clientManager.Open("benchmarkSend", 0)
+	clientStream, err := clientManager.OpenStream("benchmarkSend", 0)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -162,10 +162,10 @@ func BenchmarkStream_NewStreamedSender(b *testing.B) {
 	defer serverManager.Close()
 	defer clientManager.Close()
 
-	// Wait for Accept to complete before use
+	// Wait for AcceptStream to complete before use
 	acceptDone := make(chan *intSmux.Stream, 1)
 	go func() {
-		stream, err := serverManager.Accept("benchmarkSend", 0)
+		stream, err := serverManager.AcceptStream("benchmarkSend", 0)
 		if err != nil {
 			b.Error(err)
 			return
@@ -173,7 +173,7 @@ func BenchmarkStream_NewStreamedSender(b *testing.B) {
 		acceptDone <- stream
 	}()
 
-	clientStream, err := clientManager.Open("benchmarkSend", 0)
+	clientStream, err := clientManager.OpenStream("benchmarkSend", 0)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -222,7 +222,7 @@ func BenchmarkStream_SendSerialized(b *testing.B) {
 
 	acceptDone := make(chan *intSmux.Stream, 1)
 	go func() {
-		stream, err := serverManager.Accept("benchmarkSend", 0)
+		stream, err := serverManager.AcceptStream("benchmarkSend", 0)
 		if err != nil {
 			b.Error(err)
 			return
@@ -230,7 +230,7 @@ func BenchmarkStream_SendSerialized(b *testing.B) {
 		acceptDone <- stream
 	}()
 
-	clientStream, err := clientManager.Open("benchmarkSend", 0)
+	clientStream, err := clientManager.OpenStream("benchmarkSend", 0)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -273,7 +273,7 @@ func BenchmarkStream_SendEncrypted(b *testing.B) {
 
 	acceptDone := make(chan *intSmux.Stream, 1)
 	go func() {
-		stream, err := serverManager.Accept("benchmarkSend", 0)
+		stream, err := serverManager.AcceptStream("benchmarkSend", 0)
 		if err != nil {
 			b.Error(err)
 			return
@@ -281,7 +281,7 @@ func BenchmarkStream_SendEncrypted(b *testing.B) {
 		acceptDone <- stream
 	}()
 
-	clientStream, err := clientManager.Open("benchmarkSend", 0)
+	clientStream, err := clientManager.OpenStream("benchmarkSend", 0)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -322,10 +322,10 @@ func BenchmarkStream_NewStreamedEncryptedSender(b *testing.B) {
 	defer serverManager.Close()
 	defer clientManager.Close()
 
-	// Wait for Accept to complete before use
+	// Wait for AcceptStream to complete before use
 	acceptDone := make(chan *intSmux.Stream, 1)
 	go func() {
-		stream, err := serverManager.Accept("benchmarkSend", 0)
+		stream, err := serverManager.AcceptStream("benchmarkSend", 0)
 		if err != nil {
 			b.Error(err)
 			return
@@ -333,7 +333,7 @@ func BenchmarkStream_NewStreamedEncryptedSender(b *testing.B) {
 		acceptDone <- stream
 	}()
 
-	clientStream, err := clientManager.Open("benchmarkSend", 0)
+	clientStream, err := clientManager.OpenStream("benchmarkSend", 0)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -390,7 +390,7 @@ func BenchmarkStream_Receive(b *testing.B) {
 	// synchronize accept/open
 	acceptDone := make(chan *intSmux.Stream, 1)
 	go func() {
-		stream, err := serverManager.Accept("benchmarkSend", 0)
+		stream, err := serverManager.AcceptStream("benchmarkSend", 0)
 		if err != nil {
 			b.Error(err)
 			return
@@ -398,7 +398,7 @@ func BenchmarkStream_Receive(b *testing.B) {
 		acceptDone <- stream
 	}()
 
-	clientStream, err := clientManager.Open("benchmarkSend", 0)
+	clientStream, err := clientManager.OpenStream("benchmarkSend", 0)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -439,14 +439,14 @@ func BenchmarkStream_NewStreamedReceiver(b *testing.B) {
 	// Wait for the server side to accept before proceeding
 	acceptDone := make(chan *intSmux.Stream, 1)
 	go func() {
-		stream, err := serverManager.Accept("benchmarkSend", 0)
+		stream, err := serverManager.AcceptStream("benchmarkSend", 0)
 		if err != nil {
 			b.Fatal(err)
 		}
 		acceptDone <- stream
 	}()
 
-	clientStream, err := clientManager.Open("benchmarkSend", 0)
+	clientStream, err := clientManager.OpenStream("benchmarkSend", 0)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -496,7 +496,7 @@ func BenchmarkStream_ReceiveSerialized(b *testing.B) {
 	// synchronize accept/open
 	acceptDone := make(chan *intSmux.Stream, 1)
 	go func() {
-		stream, err := serverManager.Accept("benchmarkSend", 0)
+		stream, err := serverManager.AcceptStream("benchmarkSend", 0)
 		if err != nil {
 			b.Error(err)
 			return
@@ -504,7 +504,7 @@ func BenchmarkStream_ReceiveSerialized(b *testing.B) {
 		acceptDone <- stream
 	}()
 
-	clientStream, err := clientManager.Open("benchmarkSend", 0)
+	clientStream, err := clientManager.OpenStream("benchmarkSend", 0)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -544,7 +544,7 @@ func BenchmarkStream_ReceiveEncrypted(b *testing.B) {
 
 	acceptDone := make(chan *intSmux.Stream, 1)
 	go func() {
-		stream, err := serverManager.Accept("benchmarkSend", 0)
+		stream, err := serverManager.AcceptStream("benchmarkSend", 0)
 		if err != nil {
 			b.Error(err)
 			return
@@ -552,7 +552,7 @@ func BenchmarkStream_ReceiveEncrypted(b *testing.B) {
 		acceptDone <- stream
 	}()
 
-	clientStream, err := clientManager.Open("benchmarkSend", 0)
+	clientStream, err := clientManager.OpenStream("benchmarkSend", 0)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -593,14 +593,14 @@ func BenchmarkStream_NewStreamedEncryptedReceiver(b *testing.B) {
 	// Wait for the server side to accept before proceeding
 	acceptDone := make(chan *intSmux.Stream, 1)
 	go func() {
-		stream, err := serverManager.Accept("benchmarkSend", 0)
+		stream, err := serverManager.AcceptStream("benchmarkSend", 0)
 		if err != nil {
 			b.Fatal(err)
 		}
 		acceptDone <- stream
 	}()
 
-	clientStream, err := clientManager.Open("benchmarkSend", 0)
+	clientStream, err := clientManager.OpenStream("benchmarkSend", 0)
 	if err != nil {
 		b.Fatal(err)
 	}

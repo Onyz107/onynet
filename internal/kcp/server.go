@@ -45,12 +45,12 @@ func NewServer(addr net.Addr, ctx context.Context) (*Server, error) {
 
 // Accept waits for a new KCP client connection.
 func (s *Server) Accept() (*ClientConn, error) {
-	logger.Log.Debugf("kcp.Server Accept: accepting client connection")
+	logger.Log.Debugf("kcp.Server AcceptStream: accepting client connection")
 	conn, err := s.listener.AcceptKCP()
 	if err != nil {
 		return nil, errors.Join(intErrors.ErrAccept, err)
 	}
-	logger.Log.Debug("kcp.Server Accept: accepted client connection")
+	logger.Log.Debug("kcp.Server AcceptStream: accepted client connection")
 
 	// Performance optimizations
 	conn.SetWindowSize(512, 512)
@@ -61,7 +61,7 @@ func (s *Server) Accept() (*ClientConn, error) {
 	go func() {
 		select {
 		case <-client.ctx.Done():
-			logger.Log.Debug("kcp.Server Accept: closing client connection because of context canceled")
+			logger.Log.Debug("kcp.Server AcceptStream: closing client connection because of context canceled")
 			client.Close()
 			return
 		case <-client.done:
