@@ -21,9 +21,10 @@ import (
 // only be used when performing operations on the Client, while ClientConn
 // should only be used when performing operations on the Server.
 type Client struct {
-	client  *kcp.Client
-	manager *intSmux.Manager
-	ctx     context.Context
+	client    *kcp.Client
+	connected bool
+	manager   *intSmux.Manager
+	ctx       context.Context
 }
 
 // Dial connects to an OnyNet server, optionally authenticates (if publicKey is provided), and returns a client.
@@ -68,7 +69,12 @@ func Dial(addr net.Addr, publicKey *rsa.PublicKey, ctx context.Context) (*Client
 
 	manager := intSmux.NewManager(session, aesKey, ctx)
 
-	onynetClient := &Client{client: client, manager: manager, ctx: ctx}
+	onynetClient := &Client{
+		client:    client,
+		connected: true,
+		manager:   manager,
+		ctx:       ctx,
+	}
 
 	heartbeatStream, err := onynetClient.OpenStream("heartbeatStream", onynetClient.ctx, 5*time.Second)
 	if err != nil {
@@ -115,8 +121,16 @@ func (c *Client) AcceptStream(name string, ctx context.Context, timeout time.Dur
 	return c.manager.AcceptStream(name, ctx, timeout)
 }
 
+// IsConnected returns true if the client is currently connected to the server, and false otherwise.
+// The connection status is tracked by a variable that is set to true when a connection is established,
+// and set to false when the Close function is called (for example, after a heartbeat failure or a manual disconnect).
+func (c *Client) IsConnected() bool {
+	return c.connected
+}
+
 // Close gracefully closes client connections and streams.
 func (c *Client) Close() error {
+	c.connected = false
 	var errs []error
 
 	if err := c.client.Close(); err != nil {

@@ -15,9 +15,10 @@ import (
 // only be used when performing operations on the Client, while ClientConn
 // should only be used when performing operations on the Server.
 type ClientConn struct {
-	client  *kcp.ClientConn
-	manager *intSmux.Manager
-	ctx     context.Context
+	client    *kcp.ClientConn
+	connected bool
+	manager   *intSmux.Manager
+	ctx       context.Context
 }
 
 // OpenStream opens a named stream to communicate with the client.
@@ -49,6 +50,13 @@ func (cn *ClientConn) AcceptStream(name string, ctx context.Context, timeout tim
 	return cn.manager.AcceptStream(name, ctx, timeout)
 }
 
+// IsConnected returns true if the client is currently connected to the server, and false otherwise.
+// The connection status is tracked by a variable that is set to true when a connection is established,
+// and set to false when the Close function is called (for example, after a heartbeat failure or a manual disconnect).
+func (cn *ClientConn) IsConnected() bool {
+	return cn.connected
+}
+
 // LocalAddr returns the client's local address.
 func (cn *ClientConn) LocalAddr() net.Addr {
 	return cn.client.LocalAddr()
@@ -61,6 +69,7 @@ func (cn *ClientConn) RemoteAddr() net.Addr {
 
 // Close closes the client connection and streams.
 func (cn *ClientConn) Close() error {
+	cn.connected = false
 	var errs []error
 
 	if err := cn.client.Close(); err != nil {

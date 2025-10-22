@@ -85,7 +85,12 @@ func (s *Server) Accept() (*ClientConn, error) {
 	}
 	manager := intSmux.NewManager(session, aesKey, s.ctx)
 
-	onynetClientConn := &ClientConn{client: client, manager: manager, ctx: s.ctx}
+	onynetClientConn := &ClientConn{
+		client:    client,
+		connected: true,
+		manager:   manager,
+		ctx:       s.ctx,
+	}
 
 	id := int(atomic.AddInt64(&clientCounter, 1))
 	s.mu.Lock()
@@ -103,12 +108,21 @@ func (s *Server) Accept() (*ClientConn, error) {
 		defer heartbeatStream.Close()
 		if err := heartbeat.ReceiveHeartbeat(heartbeatStream, s.ctx); err != nil {
 			logger.Log.Debugf("closing client because of heartbeat err: %v", err)
-			delete(s.clients, id)
-			onynetClientConn.Close()
+			s.CloseClient(id)
 		}
 	}()
 
 	return onynetClientConn, nil
+}
+
+func (s *Server) CloseClient(id int) error {
+	client := s.GetClient(id)
+	if client == nil {
+		return nil
+	}
+	client.connected = false
+	delete(s.clients, id)
+	return client.Close()
 }
 
 // GetClients returns a map of all connected clients with id being the key and ClientConn being the value.
