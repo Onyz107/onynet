@@ -23,6 +23,10 @@ func Send(conn net.Conn, data []byte, timeout time.Duration) error {
 	logger.Log.Debugf("Writing %d bytes of data to %s", len(data), conn.RemoteAddr().String())
 	n, err := timedConn.Write(data)
 	if err != nil {
+		var ne net.Error
+		if errors.As(err, &ne) && ne.Timeout() {
+			return errors.Join(intErrors.ErrTimeout, err)
+		}
 		return errors.Join(intErrors.ErrWrite, err)
 	}
 	if n != len(data) {

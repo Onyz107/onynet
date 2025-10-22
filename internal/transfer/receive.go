@@ -19,6 +19,10 @@ func Receive(conn net.Conn, buf []byte, timeout time.Duration) error {
 	timedConn := getTimedReadWriteCloser(conn, timeout)
 
 	if _, err := io.ReadFull(timedConn, buf); err != nil {
+		var ne net.Error
+		if errors.As(err, &ne) && ne.Timeout() {
+			return errors.Join(intErrors.ErrTimeout, err)
+		}
 		return errors.Join(intErrors.ErrRead, err)
 	}
 

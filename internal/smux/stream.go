@@ -48,6 +48,7 @@ func (s *Stream) Write(b []byte) (n int, err error) {
 // Possible errors:
 //   - ErrWrite: failed to send data through the stream
 //   - ErrShortWrite: data sent was shorter than expected
+//   - ErrTimeout: timeout occurred when receiving data from the stream
 func (s *Stream) Send(b []byte, timeout time.Duration) error {
 	return transfer.Send(s.stream, b, timeout)
 }
@@ -64,6 +65,7 @@ func (s *Stream) NewStreamedSender(timeout time.Duration) io.WriteCloser {
 // Possible errors:
 //   - ErrWrite: failed to send data through the stream
 //   - ErrShortWrite: data sent was shorter than expected
+//   - ErrTimeout: timeout occurred when receiving data from the stream
 func (s *Stream) SendSerialized(b []byte, timeout time.Duration) error {
 	return transfer.SendSerialized(s.stream, b, timeout)
 }
@@ -77,6 +79,7 @@ func (s *Stream) SendSerialized(b []byte, timeout time.Duration) error {
 //   - ErrAesKey: the aesKey is nil, meaning authentication is not enabled
 //   - ErrCipher: the aesKey has an invalid key size
 //   - ErrGCM: failed to create GCM
+//   - ErrTimeout: timeout occurred when receiving data from the stream
 func (s *Stream) SendEncrypted(b []byte, timeout time.Duration) error {
 	return transfer.SendEncrypted(s.stream, b, s.aesKey, timeout)
 }
@@ -97,6 +100,7 @@ func (s *Stream) NewStreamedEncryptedSender(timeout time.Duration) (io.WriteClos
 //
 // Possible errors:
 //   - ErrRead: failed to receive data from the stream
+//   - ErrTimeout: timeout occurred when receiving data from the stream
 func (s *Stream) Receive(b []byte, timeout time.Duration) error {
 	return transfer.Receive(s.stream, b, timeout)
 }
@@ -113,6 +117,7 @@ func (s *Stream) NewStreamedReceiver(timeout time.Duration) io.ReadCloser {
 // Possible errors:
 //   - ErrSmallBuffer: the buffer provided was too small to receive the incoming data
 //   - ErrRead: failed to receive data from the stream
+//   - ErrTimeout: timeout occurred when receiving data from the stream
 func (s *Stream) ReceiveSerialized(b []byte, timeout time.Duration) (uint64, error) {
 	return transfer.ReceiveSerialized(s.stream, b, timeout)
 }
@@ -128,6 +133,7 @@ func (s *Stream) ReceiveSerialized(b []byte, timeout time.Duration) (uint64, err
 //   - ErrGCM: failed to create GCM
 //   - ErrShort: ciphertext received is malformed because it is too short
 //   - ErrDecrypt: failed to decrypt the received data
+//   - ErrTimeout: timeout occurred when receiving data from the stream
 func (s *Stream) ReceiveEncrypted(b []byte, timeout time.Duration) (uint64, error) {
 	return transfer.ReceiveEncrypted(s.stream, b, s.aesKey, timeout)
 }
