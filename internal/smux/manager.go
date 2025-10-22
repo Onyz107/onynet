@@ -265,7 +265,7 @@ func (m *Manager) Close() error {
 	return m.session.Close()
 }
 
-// CloseChan returns channel closed when session is terminated.
+// CloseChan returns a channel when the session is terminated.
 func (m *Manager) CloseChan() <-chan struct{} {
 	return m.session.CloseChan()
 }

@@ -148,26 +148,40 @@ func (s *Stream) NewStreamedEncryptedReceiver(timeout time.Duration) (io.ReadClo
 	return transfer.NewStreamedEncryptedReceiver(s.stream, s.aesKey, timeout)
 }
 
+// Close implements net.Conn
 func (s *Stream) Close() error {
 	return s.stream.Close()
 }
 
+// LocalAddr satisfies net.Conn interface
 func (s *Stream) LocalAddr() net.Addr {
 	return s.stream.LocalAddr()
 }
 
+// RemoteAddr satisfies net.Conn interface
 func (s *Stream) RemoteAddr() net.Addr {
 	return s.stream.RemoteAddr()
 }
 
+// SetDeadline sets both read and write deadlines as defined by net.Conn.SetDeadline.
+// A zero time value disables the deadlines.
 func (s *Stream) SetDeadline(t time.Time) error {
 	return s.stream.SetDeadline(t)
 }
 
+// SetReadDeadline sets the read deadline as defined by net.Conn.SetReadDeadline.
+// A zero time value disables the deadline.
 func (s *Stream) SetReadDeadline(t time.Time) error {
 	return s.stream.SetReadDeadline(t)
 }
 
+// SetWriteDeadline sets the write deadline as defined by net.Conn.SetWriteDeadline.
+// A zero time value disables the deadline.
 func (s *Stream) SetWriteDeadline(t time.Time) error {
 	return s.stream.SetWriteDeadline(t)
+}
+
+// GetDieCh returns a readonly chan which can be readable when the stream is to be closed.
+func (s *Stream) GetDieCh() <-chan struct{} {
+	return s.stream.GetDieCh()
 }
