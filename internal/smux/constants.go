@@ -27,6 +27,7 @@ type Communicator interface {
 	ReceiveSerialized(b []byte, timeout time.Duration) (uint64, error)
 	ReceiveEncrypted(b []byte, timeout time.Duration) (uint64, error)
 	NewStreamedEncryptedReceiver(timeout time.Duration) (io.ReadCloser, error)
+	GetDieCh() <-chan struct{}
 }
 
 var headerPool = sync.Pool{
