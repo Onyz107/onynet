@@ -15,5 +15,6 @@ var (
 func init() {
 	once.Do(func() {
 		Log = onylogger.New(os.Stderr)
+		Log.SetLevel(onylogger.LevelDebug)
 	})
 }
