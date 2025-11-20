@@ -95,7 +95,7 @@ func main() {
 	}
 	defer server.Close()
 
-	clientConn, err := server.AcceptStream()
+	clientConn, err := server.Accept()
 	if err != nil {
 		panic(err)
 	}
