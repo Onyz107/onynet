@@ -45,7 +45,7 @@ func (m *Manager) AcceptStream(name string, ctx context.Context, timeout time.Du
 	inCtx := ctx
 	if timeout > 0 {
 		var cancel context.CancelFunc
-		inCtx, cancel = context.WithTimeout(m.ctx, timeout)
+		inCtx, cancel = context.WithTimeout(ctx, timeout)
 		defer cancel()
 	}
 
@@ -67,7 +67,7 @@ func (m *Manager) AcceptStream(name string, ctx context.Context, timeout time.Du
 			return nil, intErrors.ErrCtxCancelled
 
 		default:
-			stream, err := m.accept(name, ctx, streamTimeout)
+			stream, err := m.accept(name, inCtx, streamTimeout)
 			if err != nil {
 				if errors.Is(err, smux.ErrTimeout) || errors.Is(err, intErrors.ErrNameMismatch) {
 					logger.Log.Debugf("smux/manager AcceptStream: got non crticial error: %v continuing", err)
@@ -81,6 +81,12 @@ func (m *Manager) AcceptStream(name string, ctx context.Context, timeout time.Du
 }
 
 func (m *Manager) accept(name string, ctx context.Context, timeout time.Duration) (*Stream, error) {
+	if timeout > 0 {
+		logger.Log.Debugf("smux/manager accept: session timeout is: %f", timeout.Seconds())
+		m.session.SetDeadline(time.Now().Add(timeout))
+		defer m.session.SetDeadline(time.Time{})
+	}
+
 	stream, err := m.session.AcceptStream()
 	if err != nil {
 		return nil, errors.Join(intErrors.ErrAcceptStream, err)
@@ -152,7 +158,7 @@ func (m *Manager) OpenStream(name string, ctx context.Context, timeout time.Dura
 	inCtx := ctx
 	if timeout > 0 {
 		var cancel context.CancelFunc
-		inCtx, cancel = context.WithTimeout(m.ctx, timeout)
+		inCtx, cancel = context.WithTimeout(ctx, timeout)
 		defer cancel()
 	}
 
@@ -174,7 +180,7 @@ func (m *Manager) OpenStream(name string, ctx context.Context, timeout time.Dura
 			return nil, intErrors.ErrCtxCancelled
 
 		default:
-			stream, err := m.open(name, ctx, streamTimeout)
+			stream, err := m.open(name, inCtx, streamTimeout)
 			if err != nil {
 				if errors.Is(err, smux.ErrTimeout) || errors.Is(err, intErrors.ErrNameMismatch) {
 					logger.Log.Debugf("smux/manager OpenStream: got noncrticial error: %v continuing", err)
@@ -188,6 +194,12 @@ func (m *Manager) OpenStream(name string, ctx context.Context, timeout time.Dura
 }
 
 func (m *Manager) open(name string, ctx context.Context, timeout time.Duration) (*Stream, error) {
+	if timeout > 0 {
+		logger.Log.Debugf("smux/manager open: session timeout is: %f", timeout.Seconds())
+		m.session.SetDeadline(time.Now().Add(timeout))
+		defer m.session.SetDeadline(time.Time{})
+	}
+
 	stream, err := m.session.OpenStream()
 	if err != nil {
 		return nil, errors.Join(intErrors.ErrOpenStream, err)
