@@ -44,6 +44,7 @@ func (m *Manager) AcceptStream(name string, ctx context.Context, timeout time.Du
 
 	logger.Log.Debugf("smux/manager AcceptStream: timeout is: %f", timeout.Seconds())
 
+	start := time.Now()
 	for {
 		time.Sleep(50 * time.Millisecond)
 		select {
@@ -52,9 +53,12 @@ func (m *Manager) AcceptStream(name string, ctx context.Context, timeout time.Du
 			return nil, intErrors.ErrCtxCancelled
 
 		default:
-			stream, err := m.accept(name, ctx, timeout)
+			if time.Since(start) >= timeout {
+				return nil, intErrors.ErrTimeout
+			}
+			stream, err := m.accept(name, ctx, time.Second)
 			if err != nil {
-				if errors.Is(err, smux.ErrTimeout) || errors.Is(err, intErrors.ErrNameMismatch) {
+				if errors.Is(err, intErrors.ErrNameMismatch) {
 					logger.Log.Debugf("smux/manager AcceptStream: got non crticial error: %v continuing", err)
 					continue
 				}
@@ -141,7 +145,7 @@ func (m *Manager) OpenStream(name string, ctx context.Context, timeout time.Dura
 	}
 
 	logger.Log.Debugf("smux/manager OpenStream: timeout is: %f", timeout.Seconds())
-
+	start := time.Now()
 	for {
 		time.Sleep(50 * time.Millisecond)
 		select {
@@ -150,9 +154,12 @@ func (m *Manager) OpenStream(name string, ctx context.Context, timeout time.Dura
 			return nil, intErrors.ErrCtxCancelled
 
 		default:
-			stream, err := m.open(name, ctx, timeout)
+			if time.Since(start) >= timeout {
+				return nil, intErrors.ErrTimeout
+			}
+			stream, err := m.open(name, ctx, time.Second)
 			if err != nil {
-				if errors.Is(err, smux.ErrTimeout) || errors.Is(err, intErrors.ErrNameMismatch) {
+				if errors.Is(err, intErrors.ErrNameMismatch) {
 					logger.Log.Debugf("smux/manager OpenStream: got noncrticial error: %v continuing", err)
 					continue
 				}
