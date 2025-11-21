@@ -53,7 +53,7 @@ func (m *Manager) AcceptStream(name string, ctx context.Context, timeout time.Du
 			return nil, intErrors.ErrCtxCancelled
 
 		default:
-			if time.Since(start) >= timeout {
+			if timeout > 0 && time.Since(start) >= timeout {
 				return nil, intErrors.ErrTimeout
 			}
 			stream, err := m.accept(name, ctx, time.Second)
@@ -154,7 +154,7 @@ func (m *Manager) OpenStream(name string, ctx context.Context, timeout time.Dura
 			return nil, intErrors.ErrCtxCancelled
 
 		default:
-			if time.Since(start) >= timeout {
+			if timeout > 0 && time.Since(start) >= timeout {
 				return nil, intErrors.ErrTimeout
 			}
 			stream, err := m.open(name, ctx, time.Second)
