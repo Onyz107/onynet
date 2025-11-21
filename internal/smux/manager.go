@@ -56,7 +56,7 @@ func (m *Manager) AcceptStream(name string, ctx context.Context, timeout time.Du
 			if timeout > 0 && time.Since(start) >= timeout {
 				return nil, intErrors.ErrTimeout
 			}
-			stream, err := m.accept(name, ctx, timeout)
+			stream, err := m.accept(name, ctx, timeout/3)
 			if err != nil {
 				if errors.Is(err, smux.ErrTimeout) || errors.Is(err, intErrors.ErrNameMismatch) {
 					logger.Log.Debugf("smux/manager AcceptStream: got non crticial error: %v continuing", err)
@@ -155,7 +155,7 @@ func (m *Manager) OpenStream(name string, ctx context.Context, timeout time.Dura
 			if timeout > 0 && time.Since(start) >= timeout {
 				return nil, intErrors.ErrTimeout
 			}
-			stream, err := m.open(name, ctx, timeout)
+			stream, err := m.open(name, ctx, timeout/3)
 			if err != nil {
 				if errors.Is(err, smux.ErrTimeout) || errors.Is(err, intErrors.ErrNameMismatch) {
 					logger.Log.Debugf("smux/manager OpenStream: got noncrticial error: %v continuing", err)
