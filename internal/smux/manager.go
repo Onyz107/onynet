@@ -86,7 +86,9 @@ func (m *Manager) accept(name string, ctx context.Context, timeout time.Duration
 		stream.SetDeadline(time.Now().Add(timeout))
 	}
 
-	header := make([]byte, 2)
+	headerPtr := headerPool.Get().(*[]byte)
+	defer headerPool.Put(headerPtr)
+	header := *headerPtr
 
 	logger.Log.Debugf("smux/manager accept: reading header")
 	if _, err := io.ReadFull(stream, header); err != nil {
@@ -185,7 +187,9 @@ func (m *Manager) open(name string, ctx context.Context, timeout time.Duration) 
 		stream.SetDeadline(time.Now().Add(timeout))
 	}
 
-	header := make([]byte, 2)
+	headerPtr := headerPool.Get().(*[]byte)
+	defer headerPool.Put(headerPtr)
+	header := *headerPtr
 
 	length := uint16(len(name))
 	logger.Log.Debugf("smux/manager open: found length: %d", length)

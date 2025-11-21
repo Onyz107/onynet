@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -113,4 +114,11 @@ type Communicator interface {
 
 	// GetDieCh returns a readonly chan which can be readable when the stream is to be closed.
 	GetDieCh() <-chan struct{}
+}
+
+var headerPool = sync.Pool{
+	New: func() interface{} {
+		buf := make([]byte, 2)
+		return &buf
+	},
 }
