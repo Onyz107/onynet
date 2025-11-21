@@ -42,32 +42,17 @@ func (m *Manager) AcceptStream(name string, ctx context.Context, timeout time.Du
 		return nil, intErrors.ErrNameTooLong
 	}
 
-	inCtx := ctx
-	if timeout > 0 {
-		var cancel context.CancelFunc
-		inCtx, cancel = context.WithTimeout(ctx, timeout)
-		defer cancel()
-	}
-
-	streamTimeout := timeout
-	if timeout > 5*time.Second {
-		streamTimeout = 5 * time.Second
-	}
-
-	logger.Log.Debugf("smux/manager AcceptStream: streamTimeout is: %f: context timeout is: %f", streamTimeout.Seconds(), timeout.Seconds())
+	logger.Log.Debugf("smux/manager AcceptStream: timeout is: %f", timeout.Seconds())
 
 	for {
 		time.Sleep(50 * time.Millisecond)
 		select {
 
-		case <-inCtx.Done():
-			if errors.Is(inCtx.Err(), context.DeadlineExceeded) {
-				return nil, intErrors.ErrTimeout
-			}
+		case <-ctx.Done():
 			return nil, intErrors.ErrCtxCancelled
 
 		default:
-			stream, err := m.accept(name, inCtx, streamTimeout)
+			stream, err := m.accept(name, ctx, timeout)
 			if err != nil {
 				if errors.Is(err, smux.ErrTimeout) || errors.Is(err, intErrors.ErrNameMismatch) {
 					logger.Log.Debugf("smux/manager AcceptStream: got non crticial error: %v continuing", err)
@@ -155,32 +140,17 @@ func (m *Manager) OpenStream(name string, ctx context.Context, timeout time.Dura
 		return nil, intErrors.ErrNameTooLong
 	}
 
-	inCtx := ctx
-	if timeout > 0 {
-		var cancel context.CancelFunc
-		inCtx, cancel = context.WithTimeout(ctx, timeout)
-		defer cancel()
-	}
-
-	streamTimeout := timeout
-	if timeout > 5*time.Second {
-		streamTimeout = 5 * time.Second
-	}
-
-	logger.Log.Debugf("smux/manager OpenStream: streamTimeout is: %f: context timeout is: %f", streamTimeout.Seconds(), timeout.Seconds())
+	logger.Log.Debugf("smux/manager OpenStream: timeout is: %f", timeout.Seconds())
 
 	for {
 		time.Sleep(50 * time.Millisecond)
 		select {
 
-		case <-inCtx.Done():
-			if errors.Is(inCtx.Err(), context.DeadlineExceeded) {
-				return nil, intErrors.ErrTimeout
-			}
+		case <-ctx.Done():
 			return nil, intErrors.ErrCtxCancelled
 
 		default:
-			stream, err := m.open(name, inCtx, streamTimeout)
+			stream, err := m.open(name, ctx, timeout)
 			if err != nil {
 				if errors.Is(err, smux.ErrTimeout) || errors.Is(err, intErrors.ErrNameMismatch) {
 					logger.Log.Debugf("smux/manager OpenStream: got noncrticial error: %v continuing", err)
